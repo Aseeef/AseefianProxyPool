@@ -1,0 +1,62 @@
+plugins {
+    id "java"
+    id "com.github.johnrengelman.shadow" version "6.1.0"
+    id "io.freefair.lombok" version "6.1.0"
+}
+
+group 'aseef.dev'
+version '1.0.0'
+
+sourceCompatibility.java8
+targetCompatibility.java8
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
+repositories {
+    mavenLocal()
+    maven {
+        url 'https://jitpack.io'
+    }
+    maven {
+        url 'https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient'
+    }
+}
+
+dependencies {
+    // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
+    implementation ('org.apache.httpcomponents:httpclient:4.5.13')
+}
+
+configurations.all {
+    resolutionStrategy {
+        cacheDynamicVersionsFor 5*60, 'seconds'
+        cacheChangingModulesFor 0, 'minutes'
+    }
+}
+
+shadowJar {
+    archiveFileName = project.name + ".jar"
+    destinationDirectory = file("build")
+}
+
+jar {
+    manifest {
+        attributes ('Main-Class': 'updater.Updater')
+    }
+}
+
+sourceSets {
+    main.java.srcDirs = ['src/main/java']
+    main.resources.srcDirs = ['src/main/resources']
+}
+
+// Force character encoding in case the workspace was not set up correctly
+tasks.withType(Javadoc) {
+    options.encoding = 'UTF-8'
+}
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+tasks.withType(Test) {
+    jvmArgs '-Dfile.encoding=UTF-8'
+}
