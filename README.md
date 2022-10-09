@@ -1,0 +1,1 @@
+The Apache Proxy Pool is a proxy pool built for the Apache HttpClient framework.
