@@ -28,13 +28,13 @@ public class ProxyConnection extends Proxy implements Closeable {
     }
 
     public long getLastInspected() {
-        return meta.getLastInspected();
+        return meta.getLastInspected().get();
     }
 
     @Override
-    public void close() throws IOException {
-        meta.setTimeTaken(-1);
-        if (meta.isLeaked()) {
+    public void close() {
+        meta.getTimeTaken().set(-1);
+        if (meta.getLeaked().get()) {
             System.err.println("A previously leaked proxy was just returned to the pool!");
         }
     }

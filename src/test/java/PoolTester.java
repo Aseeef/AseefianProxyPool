@@ -16,19 +16,17 @@ public class PoolTester {
         ApacheProxyPool pool = new ApacheProxyPool(file, Proxy.Type.SOCKS);
         pool.init();
 
-        System.out.println(pool.getActiveProxies() + "__");
-        System.out.println(pool.getAvailableProxies() + "_0_");
-
         try (ProxyConnection connection = pool.getConnection()) {
-            System.out.println(System.currentTimeMillis() - connection.getLastInspected());
-            System.out.println(pool.getAvailableProxies() + "_7_");
             long s = System.currentTimeMillis();
-            URLConnection conn = new URL("http://checkip.amazonaws.com").openConnection(connection);
-            InputStream is = conn.getInputStream();
-            byte[] targetArray = new byte[is.available()];
-            is.read(targetArray);
-            System.out.println(new String(targetArray));
-            is.close();
+            String[] uids = {"e822f8ad901f4d9ab277659a513c8dbc", "137a50b09ac84c5bb0e8d7b42b7b3b67", "8d2868b9d3fa4fa9b103530783f030fe", "92209d2b2c36493fa590b01cccd7d6b2"};
+            for (String uid : uids) {
+                URLConnection conn = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uid).openConnection(connection);
+                InputStream is = conn.getInputStream();
+                byte[] targetArray = new byte[is.available()];
+                is.read(targetArray);
+                System.out.println(new String(targetArray));
+                is.close();
+            }
             System.out.println(System.currentTimeMillis() - s + "ms");
         }
 
