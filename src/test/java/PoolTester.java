@@ -1,6 +1,5 @@
-import aseef.dev.ApacheProxyPool;
-import aseef.dev.proxy.AseefianProxy;
-import aseef.dev.ProxyConnection;
+import com.github.Aseeef.ApacheProxyPool;
+import com.github.Aseeef.ProxyConnection;
 import lombok.SneakyThrows;
 
 import java.io.File;

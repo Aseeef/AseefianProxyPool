@@ -1,7 +1,7 @@
-package aseef.dev;
+package com.github.Aseeef;
 
-import aseef.dev.proxy.ProxyMeta;
-import aseef.dev.proxy.ProxySocketAddress;
+import com.github.Aseeef.proxy.ProxyMeta;
+import com.github.Aseeef.proxy.ProxySocketAddress;
 
 import java.io.Closeable;
 import java.io.IOException;

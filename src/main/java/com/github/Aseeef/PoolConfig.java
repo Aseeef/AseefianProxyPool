@@ -1,4 +1,4 @@
-package aseef.dev;
+package com.github.Aseeef;
 
 import lombok.Getter;
 import lombok.Setter;

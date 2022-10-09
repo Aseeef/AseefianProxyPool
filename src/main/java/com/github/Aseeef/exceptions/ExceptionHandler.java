@@ -1,4 +1,4 @@
-package aseef.dev.exceptions;
+package com.github.Aseeef.exceptions;
 
 public class ExceptionHandler implements Thread.UncaughtExceptionHandler {
     @Override

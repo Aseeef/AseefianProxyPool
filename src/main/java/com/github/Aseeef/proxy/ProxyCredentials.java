@@ -1,4 +1,4 @@
-package aseef.dev.proxy;
+package com.github.Aseeef.proxy;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

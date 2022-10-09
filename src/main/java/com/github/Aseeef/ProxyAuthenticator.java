@@ -1,7 +1,7 @@
-package aseef.dev;
+package com.github.Aseeef;
 
-import aseef.dev.proxy.ProxyCredentials;
-import aseef.dev.proxy.ProxySocketAddress;
+import com.github.Aseeef.proxy.ProxyCredentials;
+import com.github.Aseeef.proxy.ProxySocketAddress;
 
 import java.net.*;
 

@@ -1,11 +1,11 @@
-package aseef.dev;
+package com.github.Aseeef;
 
-import aseef.dev.exceptions.ProxyConnectionLeakedException;
-import aseef.dev.proxy.AseefianProxy;
-import aseef.dev.proxy.ProxyCredentials;
-import aseef.dev.proxy.ProxyMeta;
-import aseef.dev.proxy.ProxySocketAddress;
-import aseef.dev.exceptions.ExceptionHandler;
+import com.github.Aseeef.exceptions.ProxyConnectionLeakedException;
+import com.github.Aseeef.proxy.AseefianProxy;
+import com.github.Aseeef.proxy.ProxyCredentials;
+import com.github.Aseeef.proxy.ProxyMeta;
+import com.github.Aseeef.proxy.ProxySocketAddress;
+import com.github.Aseeef.exceptions.ExceptionHandler;
 
 import java.io.*;
 import java.net.Authenticator;

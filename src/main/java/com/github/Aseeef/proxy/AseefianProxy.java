@@ -1,4 +1,4 @@
-package aseef.dev.proxy;
+package com.github.Aseeef.proxy;
 
 import java.net.Proxy;
 import java.util.Optional;

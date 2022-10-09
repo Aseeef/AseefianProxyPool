@@ -5,7 +5,7 @@ plugins {
     id 'maven-publish'
 }
 
-group 'aseef.dev'
+group 'com.github.Aseeef'
 version '1.0.0'
 
 sourceCompatibility.java8
@@ -19,14 +19,11 @@ repositories {
     maven {
         url 'https://jitpack.io'
     }
-    maven {
-        url 'https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient'
-    }
+
 }
 
 dependencies {
-    // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
-    implementation ('org.apache.httpcomponents:httpclient:4.5.13')
+
 }
 
 configurations.all {
@@ -39,12 +36,6 @@ configurations.all {
 shadowJar {
     archiveFileName = project.name + ".jar"
     destinationDirectory = file("build")
-}
-
-jar {
-    manifest {
-        attributes ('Main-Class': 'updater.Updater')
-    }
 }
 
 sourceSets {

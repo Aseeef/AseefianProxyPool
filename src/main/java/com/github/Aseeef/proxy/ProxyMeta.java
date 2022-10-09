@@ -1,7 +1,6 @@
-package aseef.dev.proxy;
+package com.github.Aseeef.proxy;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
