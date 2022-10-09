@@ -3,6 +3,7 @@ import aseef.dev.proxy.AseefianProxy;
 import aseef.dev.ProxyConnection;
 import lombok.SneakyThrows;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.*;
 
@@ -11,7 +12,16 @@ public class PoolTester {
     @SneakyThrows
     public static void main(String[] args) {
 
-        try (ProxyConnection connection = new ApacheProxyPool(new AseefianProxy("138.128.59.129", 9058, Proxy.Type.HTTP,"izmowoqc", "3ap8cd4xo2gq")).init().getConnection()) {
+        File file = new File("Webshare 10 proxies.txt");
+        ApacheProxyPool pool = new ApacheProxyPool(file, Proxy.Type.SOCKS);
+        pool.init();
+
+        System.out.println(pool.getActiveProxies() + "__");
+        System.out.println(pool.getAvailableProxies() + "_0_");
+
+        try (ProxyConnection connection = pool.getConnection()) {
+            System.out.println(System.currentTimeMillis() - connection.getLastInspected());
+            System.out.println(pool.getAvailableProxies() + "_7_");
             long s = System.currentTimeMillis();
             URLConnection conn = new URL("http://checkip.amazonaws.com").openConnection(connection);
             InputStream is = conn.getInputStream();
@@ -19,7 +29,7 @@ public class PoolTester {
             is.read(targetArray);
             System.out.println(new String(targetArray));
             is.close();
-            System.out.println(System.currentTimeMillis() - s);
+            System.out.println(System.currentTimeMillis() - s + "ms");
         }
 
         /*

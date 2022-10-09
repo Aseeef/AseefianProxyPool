@@ -15,13 +15,13 @@ public class PoolConfig {
      */
     private boolean testProxies = true;
     /**
-     * The frequency at which to ping each proxy.
+     * The minimum millis the proxy must have been tested ago to be applicable for a lease.
      */
-    private int testFreqMillis = 1000 * 5; // 5 seconds
+    private int minMillisTestAgo = 1000 * 10; // 10 seconds
     /**
      * The maximum amount of time to wait for a proxy to respond.
      */
-    private int proxyTimeoutMillis = 1000 * 8; // 8 seconds
+    private int proxyTimeoutMillis = 1000 * 3; // 8 seconds
 
     /**
      * Whether to allow the leasing of untested proxies. When this is disabled,

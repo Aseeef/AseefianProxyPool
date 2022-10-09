@@ -4,8 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
-@Getter @Setter
+@Getter
 public class ProxyMeta {
 
     public ProxyMeta(ProxyCredentials credentials) {
@@ -15,33 +17,33 @@ public class ProxyMeta {
     /**
      * The credentials for this proxy (may be null).
      */
-    private ProxyCredentials credentials;
+    private final ProxyCredentials credentials;
 
     /**
      * The time at which this proxy was taken from the pool in epoch millis. A value of -1 indicates that this proxy is currently with in the pool.
      */
-    private long timeTaken = -1;
+    private AtomicLong timeTaken = new AtomicLong(-1);
 
     /**
      * The last time that this proxy was validated to be working in epoch millis. A value of -1 indicates that this proxy has never been tested.
      */
-    private long lastInspected = -1;
+    private AtomicLong lastInspected = new AtomicLong(-1);
 
     /**
      * Whether this proxy is alive
      */
-    private boolean alive = false;
+    private AtomicBoolean alive = new AtomicBoolean(false);
 
     /**
      * Whether this proxy is a leaked proxy
      */
-    private boolean leaked = false;
+    private AtomicBoolean leaked = new AtomicBoolean(false);
 
     /**
      * @return true if in the pool and false otherwise
      */
     public boolean isInPool() {
-        return timeTaken == -1;
+        return this.timeTaken.get() == -1 && this.alive.get();
     }
 
     public Optional<ProxyCredentials> getCredentials() {
