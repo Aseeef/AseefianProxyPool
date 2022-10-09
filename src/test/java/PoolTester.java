@@ -11,13 +11,15 @@ public class PoolTester {
     @SneakyThrows
     public static void main(String[] args) {
 
-        try (ProxyConnection connection = new ApacheProxyPool(new AseefianProxy("138.128.59.129", 9058, Proxy.Type.HTTP,"izmowoqc", "3ap8cd4xo2gq")).getConnection()) {
-            URLConnection conn = new URL("https://api.myip.com").openConnection(connection);
+        try (ProxyConnection connection = new ApacheProxyPool(new AseefianProxy("138.128.59.129", 9058, Proxy.Type.HTTP,"izmowoqc", "3ap8cd4xo2gq")).init().getConnection()) {
+            long s = System.currentTimeMillis();
+            URLConnection conn = new URL("http://checkip.amazonaws.com").openConnection(connection);
             InputStream is = conn.getInputStream();
             byte[] targetArray = new byte[is.available()];
             is.read(targetArray);
             System.out.println(new String(targetArray));
             is.close();
+            System.out.println(System.currentTimeMillis() - s);
         }
 
         /*

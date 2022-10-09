@@ -1,11 +1,8 @@
 package aseef.dev.proxy;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@AllArgsConstructor @Getter @Setter @EqualsAndHashCode
+@AllArgsConstructor @Getter @Setter @EqualsAndHashCode @ToString
 public class ProxySocketAddress {
     private final String host;
     private final int port;

@@ -1,11 +1,11 @@
 package aseef.dev;
 
+import aseef.dev.proxy.ProxyMeta;
 import aseef.dev.proxy.ProxySocketAddress;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
+import java.net.*;
 
 public class ProxyConnection extends Proxy implements Closeable {
 
@@ -21,9 +21,17 @@ public class ProxyConnection extends Proxy implements Closeable {
         this.proxy = proxy;
     }
 
+    public URLConnection connect(String url) throws IOException {
+        return new URL(url).openConnection(this);
+    }
+
     @Override
     public void close() throws IOException {
-        pool.returnProxy(proxy);
+        ProxyMeta meta = pool.proxies.get(proxy);
+        meta.setTimeTaken(-1);
+        if (meta.isLeaked()) {
+            System.err.println("A previously leaked proxy was just returned to the pool!");
+        }
     }
 
 }
