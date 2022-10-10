@@ -41,6 +41,7 @@ public class ProxyConnection extends Proxy implements Closeable {
         pool.proxies.get(proxy).get().setTimeTaken(-1);
         pool.proxies.get(proxy).get().setStackBorrower(null);
         if (pool.proxies.get(proxy).get().isLeaked()) {
+            pool.proxies.get(proxy).get().setLeaked(false);
             System.err.println("A previously leaked proxy was just returned to the pool!");
         }
     }

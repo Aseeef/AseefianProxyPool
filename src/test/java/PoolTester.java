@@ -1,4 +1,5 @@
 import com.github.Aseeef.ApacheProxyPool;
+import com.github.Aseeef.PoolConfig;
 import com.github.Aseeef.ProxyConnection;
 
 import java.io.BufferedReader;
@@ -13,7 +14,8 @@ public class PoolTester {
 
         try {
             File file = new File("Webshare 10 proxies.txt");
-            ApacheProxyPool pool = new ApacheProxyPool(file, Proxy.Type.SOCKS);
+            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(400);
+            ApacheProxyPool pool = new ApacheProxyPool(file, config, Proxy.Type.SOCKS);
             pool.init();
 
             BufferedReader br = new BufferedReader(new FileReader(new File("users.csv")));
@@ -24,7 +26,6 @@ public class PoolTester {
                     HttpURLConnection get = (HttpURLConnection) connection.connect(String.format("https://sessionserver.mojang.com/session/minecraft/profile/%s", br.readLine().toLowerCase()));
                     get.setRequestMethod("GET");
                     String s = new String(get.getInputStream().readAllBytes());
-                    Thread.sleep(18000);
                 }
                 System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies());
 

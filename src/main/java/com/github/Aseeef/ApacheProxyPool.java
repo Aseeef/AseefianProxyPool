@@ -165,8 +165,8 @@ public class ApacheProxyPool {
             if (meta.getLastInspected() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.7)) {
                 continue;
             }
-            // skip proxies not in the pool
-            if (!meta.isInPool())
+            // skip proxies not in the pool (but dont skip "dead proxies")
+            if (meta.getTimeTaken() != -1)
                 continue;
 
             meta.setInspecting(true);

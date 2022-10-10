@@ -2,8 +2,9 @@ package com.github.Aseeef;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
-@Getter @Setter
+@Getter @Setter @Accessors(chain = true)
 public class PoolConfig {
 
     /**
