@@ -10,7 +10,7 @@ public class PoolConfig {
     /**
      * The maximum amount of time a proxy may remain outside the pool in milliseconds
      */
-    private int connectionLeakThreshold = 1000 * 15; // 15 seconds
+    private int connectionLeakThreshold = 1000 * 30; // 30 seconds
     /**
      * Whether to periodically test proxies to ensure they are still alive.
      */
@@ -18,11 +18,11 @@ public class PoolConfig {
     /**
      * The minimum millis the proxy must have been tested ago to be applicable for a lease.
      */
-    private int minMillisTestAgo = 1000 * 15; // 10 seconds
+    private int minMillisTestAgo = 1000 * 10; // 10 seconds
     /**
      * The maximum amount of time to wait for a proxy to respond.
      */
-    private int proxyTimeoutMillis = 1000 * 4; // 4 seconds
+    private int proxyTimeoutMillis = 1000 * 3; // 3 seconds
 
     /**
      * Whether to allow the leasing of untested proxies. When this is disabled,

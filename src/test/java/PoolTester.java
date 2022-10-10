@@ -14,7 +14,7 @@ public class PoolTester {
 
         try {
             File file = new File("Webshare 10 proxies.txt");
-            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(400);
+            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(500);
             ApacheProxyPool pool = new ApacheProxyPool(file, config, Proxy.Type.SOCKS);
             pool.init();
 
@@ -27,7 +27,7 @@ public class PoolTester {
                     get.setRequestMethod("GET");
                     String s = new String(get.getInputStream().readAllBytes());
                 }
-                System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies());
+                System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies() );
 
             }
         } catch (Exception ex) {

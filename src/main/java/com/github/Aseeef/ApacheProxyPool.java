@@ -162,7 +162,7 @@ public class ApacheProxyPool {
             ProxyMeta meta = set.getValue().get();
 
             // skip proxies that were very recently inspected
-            if (meta.getLastInspected() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.7)) {
+            if (meta.getLastInspected() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.75)) {
                 continue;
             }
             // skip proxies not in the pool (but dont skip "dead proxies")
