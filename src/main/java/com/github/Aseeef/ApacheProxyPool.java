@@ -1,12 +1,11 @@
 package com.github.Aseeef;
 
+import com.github.Aseeef.exceptions.ExceptionHandler;
 import com.github.Aseeef.exceptions.ProxyConnectionLeakedException;
 import com.github.Aseeef.proxy.AseefianProxy;
 import com.github.Aseeef.proxy.ProxyCredentials;
 import com.github.Aseeef.proxy.ProxyMeta;
 import com.github.Aseeef.proxy.ProxySocketAddress;
-import com.github.Aseeef.exceptions.ExceptionHandler;
-import lombok.SneakyThrows;
 
 import java.io.*;
 import java.net.Authenticator;
@@ -97,14 +96,18 @@ public class ApacheProxyPool {
                 if (keepWorking.get()) {
                     for (Map.Entry<ProxySocketAddress, ProxyMeta> set : this.proxies.entrySet()) {
                         // skip leak test if its either in the pool already or its dead
-                        if (set.getValue().getTimeTaken().get() == -1 || !set.getValue().getAlive().get()) {
+                        if (set.getValue().getTimeTaken() == -1 || !set.getValue().isAlive()) {
                             continue;
                         }
-                        if (!set.getValue().getLeaked().get() && System.currentTimeMillis() - set.getValue().getTimeTaken().get() > poolConfig.getConnectionLeakThreshold()) {
-                            set.getValue().getLeaked().set(true);
+                        // skip leak test for proxies being inspected
+                        if (set.getValue().isInspecting()) {
+                            continue;
+                        }
+                        if (!set.getValue().isLeaked() && System.currentTimeMillis() - set.getValue().getTimeTaken() > poolConfig.getConnectionLeakThreshold()) {
+                            set.getValue().setLeaked(true);
                             new ProxyConnectionLeakedException(
-                                    "Detected a proxy leak for the following proxy: " + set.getKey().toString() + " (leaked since " + (System.currentTimeMillis() - set.getValue().getTimeTaken().get()) + "ms ago)",
-                                    set.getValue().getStackBorrower().get()
+                                    "Detected a proxy leak for the following proxy: " + set.getKey().toString() + " (leaked since " + (System.currentTimeMillis() - set.getValue().getTimeTaken()) + "ms ago)",
+                                    set.getValue().getStackBorrower()
                             ).printStackTrace();
                         }
                     }
@@ -146,7 +149,7 @@ public class ApacheProxyPool {
      * @return the number of alive proxies which may be either in the pool or outside the pool.
      */
     public int getActiveProxies() {
-        return (int) this.proxies.values().stream().filter(p -> p.getAlive().get()).count();
+        return (int) this.proxies.values().stream().filter(ProxyMeta::isAlive).count();
     }
 
     private void testProxies() {
@@ -155,14 +158,14 @@ public class ApacheProxyPool {
             ProxyMeta meta = set.getValue();
 
             // skip proxies that were very recently inspected
-            if (meta.getLastInspected().get() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.7)) {
+            if (meta.getLastInspected() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.7)) {
                 continue;
             }
             // skip proxies not in the pool
             if (!meta.isInPool())
                 continue;
 
-            meta.getInspecting().set(true);
+            meta.setInspecting(true);
             try (ProxyConnection conn = getConnection(proxy, meta)) {
                 URLConnection connection = conn.connect("http://checkip.amazonaws.com");
                 connection.setConnectTimeout(poolConfig.getProxyTimeoutMillis());
@@ -170,31 +173,25 @@ public class ApacheProxyPool {
                     byte[] targetArray = new byte[is.available()];
                     is.read(targetArray);
                     assert new String(targetArray).equals(proxy.getHost());
-                    meta.getAlive().set(true);
+                    meta.setAlive(true);
                 } catch (Exception ex) {
-                    meta.getAlive().set(false);
-                    ex.printStackTrace(); //todo remove
+                    meta.setAlive(false);
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
 
-            meta.getLastInspected().set(System.currentTimeMillis());
-            meta.getInspecting().set(false);
+            meta.setLastInspected(System.currentTimeMillis());
+            meta.setInspecting(false);
         }
-    }
-
-    private ProxySocketAddress requestProxy() {
-        // get the most recently tested proxy
-        return null;
     }
 
     public ProxyConnection getConnection() {
         // get the most recently tested proxy
         while (true) {
             Optional<Map.Entry<ProxySocketAddress, ProxyMeta>> set = proxies.entrySet().stream()
-                    .filter(p -> p.getValue().getLastInspected().get() > System.currentTimeMillis() - poolConfig.getMinMillisTestAgo() && p.getValue().isInPool())
-                    .max(Comparator.comparingLong(i -> i.getValue().getLastInspected().get()));
+                    .filter(p -> p.getValue().getLastInspected() > System.currentTimeMillis() - poolConfig.getMinMillisTestAgo() && p.getValue().isInPool())
+                    .max(Comparator.comparingLong(i -> i.getValue().getLastInspected()));
             if (set.isPresent()) {
                 return getConnection(set.get().getKey(), set.get().getValue());
             }
@@ -203,8 +200,8 @@ public class ApacheProxyPool {
 
     private ProxyConnection getConnection(ProxySocketAddress address, ProxyMeta meta) {
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-        meta.getStackBorrower().set(Arrays.copyOfRange(elements,2, elements.length));
-        meta.getTimeTaken().set(System.currentTimeMillis());
+        meta.setStackBorrower(Arrays.copyOfRange(elements,2, elements.length));
+        meta.setTimeTaken(System.currentTimeMillis());
         return new ProxyConnection(this, address);
     }
 

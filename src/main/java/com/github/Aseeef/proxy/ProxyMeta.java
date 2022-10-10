@@ -1,13 +1,12 @@
 package com.github.Aseeef.proxy;
 
 import lombok.Getter;
+import lombok.Setter;
+import lombok.Synchronized;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
-@Getter
+@Getter(onMethod_ = {@Synchronized}) @Setter(onMethod_ = {@Synchronized})
 public class ProxyMeta {
 
     public ProxyMeta(ProxyCredentials credentials) {
@@ -22,38 +21,38 @@ public class ProxyMeta {
     /**
      * The time at which this proxy was taken from the pool in epoch millis. A value of -1 indicates that this proxy is currently with in the pool.
      */
-    private AtomicLong timeTaken = new AtomicLong(-1);
+    private volatile long timeTaken = -1L;
 
     /**
      * The reference from the stack of who took the connection
      */
-    private AtomicReference<StackTraceElement[]> stackBorrower = new AtomicReference<>();
+    private volatile StackTraceElement[] stackBorrower = null;
 
     /**
      * The last time that this proxy was validated to be working in epoch millis. A value of -1 indicates that this proxy has never been tested.
      */
-    private AtomicLong lastInspected = new AtomicLong(-1);
+    private volatile long lastInspected = -1L;
 
     /**
      * Whether this proxy is alive
      */
-    private AtomicBoolean alive = new AtomicBoolean(true);
+    private volatile boolean alive = true;
 
     /**
      * Whether this proxy is a leaked proxy
      */
-    private AtomicBoolean leaked = new AtomicBoolean(false);
+    private volatile boolean leaked = false;
 
     /**
      * Whether this proxy is currently being inspected. Inspected proxies cannot be leaked.
      */
-    private AtomicBoolean inspecting = new AtomicBoolean(false);
+    private volatile boolean inspecting = false;
 
     /**
      * @return true if in the pool and false otherwise
      */
     public boolean isInPool() {
-        return this.timeTaken.get() == -1 && this.alive.get();
+        return this.timeTaken == -1 && this.alive;
     }
 
     public Optional<ProxyCredentials> getCredentials() {

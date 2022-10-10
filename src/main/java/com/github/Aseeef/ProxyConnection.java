@@ -5,7 +5,10 @@ import com.github.Aseeef.proxy.ProxySocketAddress;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.*;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.URL;
+import java.net.URLConnection;
 
 public class ProxyConnection extends Proxy implements Closeable {
 
@@ -28,7 +31,7 @@ public class ProxyConnection extends Proxy implements Closeable {
     }
 
     public long getLastInspected() {
-        return meta.getLastInspected().get();
+        return meta.getLastInspected();
     }
 
     public String getHost() {
@@ -38,8 +41,10 @@ public class ProxyConnection extends Proxy implements Closeable {
     @Override
     public void close() {
         assert !meta.isInPool() : "Error. The proxy was already in the pool. This should never happen!";
-        meta.getTimeTaken().set(-1);
-        if (meta.getLeaked().get()) {
+        System.out.println("[Debug] Returned back to the pool with in " + (System.currentTimeMillis() - meta.getTimeTaken()) + "ms - " + meta.getTimeTaken());
+        meta.setTimeTaken(-1);
+        meta.setStackBorrower(null);
+        if (meta.isLeaked()) {
             System.err.println("A previously leaked proxy was just returned to the pool!");
         }
     }
