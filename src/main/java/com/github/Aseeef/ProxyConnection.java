@@ -31,8 +31,13 @@ public class ProxyConnection extends Proxy implements Closeable {
         return meta.getLastInspected().get();
     }
 
+    public String getHost() {
+        return proxy.getHost();
+    }
+
     @Override
     public void close() {
+        assert !meta.isInPool() : "Error. The proxy was already in the pool. This should never happen!";
         meta.getTimeTaken().set(-1);
         if (meta.getLeaked().get()) {
             System.err.println("A previously leaked proxy was just returned to the pool!");

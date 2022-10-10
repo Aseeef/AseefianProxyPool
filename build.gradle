@@ -43,6 +43,11 @@ sourceSets {
     main.resources.srcDirs = ['src/main/resources']
 }
 
+javadoc {
+    source = sourceSets.main.allJava
+    options.tags = [ "apiNote" ]
+}
+
 // Force character encoding in case the workspace was not set up correctly
 tasks.withType(Javadoc) {
     options.encoding = 'UTF-8'

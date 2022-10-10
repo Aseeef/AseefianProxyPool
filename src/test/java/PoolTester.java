@@ -16,6 +16,11 @@ public class PoolTester {
         pool.init();
 
         try (ProxyConnection connection = pool.getConnection()) {
+            Thread.sleep(18000);
+            System.out.println("HOST:" + connection.getHost());
+            System.out.println(pool.getAvailableProxies());
+            System.out.println(pool);
+            System.out.println(System.currentTimeMillis() - connection.getLastInspected());
             long s = System.currentTimeMillis();
             String[] uids = {"e822f8ad901f4d9ab277659a513c8dbc", "137a50b09ac84c5bb0e8d7b42b7b3b67", "8d2868b9d3fa4fa9b103530783f030fe", "92209d2b2c36493fa590b01cccd7d6b2"};
             for (String uid : uids) {
@@ -27,6 +32,7 @@ public class PoolTester {
                 is.close();
             }
             System.out.println(System.currentTimeMillis() - s + "ms");
+            System.out.println("HOST:" + connection.getHost());
         }
 
         /*
