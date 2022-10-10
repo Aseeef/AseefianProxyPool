@@ -190,6 +190,15 @@ public class ApacheProxyPool {
         }
     }
 
+    @Deprecated
+    public synchronized ProxyConnection getConnection(String host) {
+        ProxySocketAddress a = proxies.keySet().stream().filter(p -> p.getHost().equals(host)).findFirst().get();
+        do {
+            if (proxies.get(a).get().isInPool())
+                return getConnection(a, proxies.get(a));
+        } while (true);
+    }
+
     public synchronized ProxyConnection getConnection() {
         // get the most recently tested proxy
         while (true) {

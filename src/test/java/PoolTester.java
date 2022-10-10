@@ -5,6 +5,7 @@ import com.github.Aseeef.ProxyConnection;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 
@@ -14,21 +15,26 @@ public class PoolTester {
 
         try {
             File file = new File("Webshare 10 proxies.txt");
-            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(500);
-            ApacheProxyPool pool = new ApacheProxyPool(file, config, Proxy.Type.SOCKS);
+            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(3000);
+            ApacheProxyPool pool = new ApacheProxyPool(file, config, Proxy.Type.HTTP);
             pool.init();
 
             BufferedReader br = new BufferedReader(new FileReader(new File("users.csv")));
 
-            while (br.ready()) {
-                long l = System.currentTimeMillis();
-                try (ProxyConnection connection = pool.getConnection()) {
+
+
+            try (ProxyConnection connection = pool.getConnection("188.74.210.3")) {
+                while (br.ready()) {
+                    long l = System.currentTimeMillis();
                     HttpURLConnection get = (HttpURLConnection) connection.connect(String.format("https://sessionserver.mojang.com/session/minecraft/profile/%s", br.readLine().toLowerCase()));
                     get.setRequestMethod("GET");
-                    String s = new String(get.getInputStream().readAllBytes());
+                    InputStream is = get.getInputStream();
+                    byte[] targetArray = new byte[is.available()];
+                    is.read(targetArray);
+                    System.out.println(new String(targetArray));
+                    System.out.println(connection.getHost());
+                    System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies());
                 }
-                System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies() );
-
             }
         } catch (Exception ex) {
             ex.printStackTrace();
