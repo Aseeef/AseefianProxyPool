@@ -51,7 +51,7 @@ public class ProxyMeta {
     /**
      * @return true if in the pool and false otherwise
      */
-    public boolean isInPool() {
+    public synchronized boolean isInPool() {
         return this.timeTaken == -1 && this.alive;
     }
 

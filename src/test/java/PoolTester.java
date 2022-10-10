@@ -24,8 +24,10 @@ public class PoolTester {
                     HttpURLConnection get = (HttpURLConnection) connection.connect(String.format("https://sessionserver.mojang.com/session/minecraft/profile/%s", br.readLine().toLowerCase()));
                     get.setRequestMethod("GET");
                     String s = new String(get.getInputStream().readAllBytes());
+                    Thread.sleep(18000);
                 }
-                System.out.println(System.currentTimeMillis() - l + "ms");
+                System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies());
+
             }
         } catch (Exception ex) {
             ex.printStackTrace();

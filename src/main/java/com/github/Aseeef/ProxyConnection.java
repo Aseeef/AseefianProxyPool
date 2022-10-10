@@ -1,6 +1,5 @@
 package com.github.Aseeef;
 
-import com.github.Aseeef.proxy.ProxyMeta;
 import com.github.Aseeef.proxy.ProxySocketAddress;
 
 import java.io.Closeable;
@@ -17,13 +16,11 @@ public class ProxyConnection extends Proxy implements Closeable {
      */
     private final ApacheProxyPool pool;
     private final ProxySocketAddress proxy;
-    private final ProxyMeta meta;
 
     public ProxyConnection(ApacheProxyPool pool, ProxySocketAddress proxy) {
         super(proxy.getType(), new InetSocketAddress(proxy.getHost(), proxy.getPort()));
         this.pool = pool;
         this.proxy = proxy;
-        this.meta = pool.proxies.get(proxy);;
     }
 
     public URLConnection connect(String url) throws IOException {
@@ -31,7 +28,7 @@ public class ProxyConnection extends Proxy implements Closeable {
     }
 
     public long getLastInspected() {
-        return meta.getLastInspected();
+        return pool.proxies.get(proxy).get().getLastInspected();
     }
 
     public String getHost() {
@@ -39,12 +36,11 @@ public class ProxyConnection extends Proxy implements Closeable {
     }
 
     @Override
-    public void close() {
-        assert !meta.isInPool() : "Error. The proxy was already in the pool. This should never happen!";
-        System.out.println("[Debug] Returned back to the pool with in " + (System.currentTimeMillis() - meta.getTimeTaken()) + "ms - " + meta.getTimeTaken());
-        meta.setTimeTaken(-1);
-        meta.setStackBorrower(null);
-        if (meta.isLeaked()) {
+    public synchronized void close() {
+        assert !pool.proxies.get(proxy).get().isInPool() : "Error. The proxy was already in the pool. This should never happen!";
+        pool.proxies.get(proxy).get().setTimeTaken(-1);
+        pool.proxies.get(proxy).get().setStackBorrower(null);
+        if (pool.proxies.get(proxy).get().isLeaked()) {
             System.err.println("A previously leaked proxy was just returned to the pool!");
         }
     }
