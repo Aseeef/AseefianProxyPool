@@ -16,19 +16,12 @@ public class PoolTester {
 
     public static void main(String[] args) {
 
-        //todo: bandwith usage is too high!
-        // FIX!
-        // add proxy geoloc
-        // performance improvements
-        // fix loading speed with high num of proxies
-        // ability to add meta to proxies, retrieve proxies by those meta etc
-        // basically just more control of which proxy to get from the pool
         try {
             File file = new File("Webshare 10 proxies.txt");
-            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(2000);
+            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(50);
             AseefianProxyPool pool = new AseefianProxyPool(file, config, Proxy.Type.HTTP);
             pool.init();
-            System.out.println(pool.getAllProxies().entrySet().stream().filter(kv -> !kv.getValue().getProxyHealthReport().isAlive()).collect(Collectors.toList()));
+            System.out.println(pool.getAllProxies().entrySet().stream().map(kv -> kv.getValue().getProxyHealthReport().getMillisResponseTime()).collect(Collectors.toList()));
 
             BufferedReader br = new BufferedReader(new FileReader("users.csv"));
             ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
@@ -42,9 +35,9 @@ public class PoolTester {
                             InputStream is = get.getInputStream();
                             byte[] targetArray = new byte[is.available()];
                             is.read(targetArray);
-                            System.out.println(new String(targetArray));
-                            System.out.println(connection.getHost());
-                            System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies());
+                            //System.out.println(new String(targetArray));
+                            //System.out.println(connection.getHost());
+                            //System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies());
                         } catch (Exception e) {}
                     });
                 }

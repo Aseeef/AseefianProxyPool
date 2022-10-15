@@ -4,6 +4,7 @@ import com.github.Aseeef.exceptions.ExceptionHandler;
 import com.github.Aseeef.exceptions.ProxyConnectionLeakedException;
 import com.github.Aseeef.exceptions.ProxyPoolExhaustedException;
 import com.github.Aseeef.proxy.*;
+import lombok.SneakyThrows;
 
 import java.io.*;
 import java.net.Authenticator;
@@ -166,45 +167,43 @@ public class AseefianProxyPool {
         return (int) this.proxies.values().stream().filter(InternalProxyMeta::isAlive).count();
     }
 
+    @SneakyThrows
     private void testProxies() {
         List<Future<?>> futures = new ArrayList<>(this.proxies.size());
         for (Map.Entry<ProxySocketAddress, InternalProxyMeta> set : this.proxies.entrySet()) {
             // each proxy ping can take a while so it's best to submit each test in a new thread
             // for fastest and most efficient execution
             Future<?> future = proxyHealthTestThreadPool.submit(() -> {
-                ProxySocketAddress proxy = set.getKey();
-                InternalProxyMeta meta = set.getValue();
-                // skip proxies that were very recently inspected
-                if (meta.getLatestHealthReport().getLastTested() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.75)) {
-                    return;
-                }
-                // skip proxies not in the pool (but dont skip "dead proxies")
-                if (meta.getTimeTaken() != -1)
-                    return;
-                meta.setInspecting(true);
-                long ping;
-                try (ProxyConnection conn = getConnection(proxy, set.getValue())) {
-                    // using this ip testing method because
-                    // 1. amazon stays reliably online
-                    // 2. multiple servers around the world
-                    // 3. uses little bandwith
-                    ping = System.currentTimeMillis();
-                    HttpURLConnection connection = (HttpURLConnection) conn.connect("http://checkip.amazonaws.com");
-                    connection.setConnectTimeout(poolConfig.getProxyTimeoutMillis());
-                    try (InputStream is = connection.getInputStream()) {
-                        byte[] targetArray = new byte[is.available()];
-                        is.read(targetArray);
-                        assert new String(targetArray).equals(proxy.getHost());
-                        ping = System.currentTimeMillis() - ping;
+                    ProxySocketAddress proxy = set.getKey();
+                    InternalProxyMeta meta = set.getValue();
+                    // skip proxies that were very recently inspected
+                    if (meta.getLatestHealthReport().getLastTested() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.75)) {
+                        return;
                     }
-                } catch (Exception ex) {
-                    if (!(ex instanceof SocketTimeoutException))
-                        ex.printStackTrace();
-                    ping = -1;
-                }
-                meta.getLatestHealthReport().setLastTested(System.currentTimeMillis());
-                meta.getLatestHealthReport().setMillisResponseTime(ping);
-                meta.setInspecting(false);
+                    // skip proxies not in the pool (but dont skip "dead proxies")
+                    if (meta.getTimeTaken() != -1)
+                        return;
+                    meta.setInspecting(true);
+                    long ping;
+                    try (ProxyConnection conn = getConnection(proxy, set.getValue())) {
+                        // using this ip testing method because
+                        // 1. amazon stays reliably online
+                        // 2. multiple servers around the world
+                        // 3. uses little bandwith
+                        HttpURLConnection connection = (HttpURLConnection) conn.connect("http://checkip.amazonaws.com");
+                        connection.setConnectTimeout(poolConfig.getProxyTimeoutMillis());
+                        connection.setInstanceFollowRedirects(false);
+                        ping = System.currentTimeMillis();
+                        connection.connect();
+                        ping = System.currentTimeMillis() - ping;
+                    } catch (Exception ex) {
+                        if (!(ex instanceof SocketTimeoutException))
+                            ex.printStackTrace();
+                        ping = -1;
+                    }
+                    meta.getLatestHealthReport().setLastTested(System.currentTimeMillis());
+                    meta.getLatestHealthReport().setMillisResponseTime(ping);
+                    meta.setInspecting(false);
             });
             futures.add(future);
         }
@@ -218,7 +217,7 @@ public class AseefianProxyPool {
     }
 
     /**
-     * @return an immutable copy of the list of all registered proxies.
+     * @return a copy of the map of all registered proxies.
      */
     public Map<ProxySocketAddress, ProxyMetadata> getAllProxies() {
         return proxies.entrySet().stream().parallel().map((kv) -> new Object[]{kv.getKey(), kv.getValue().getMetadata()})
