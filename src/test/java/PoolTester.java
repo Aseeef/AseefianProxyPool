@@ -1,4 +1,4 @@
-import com.github.Aseeef.ApacheProxyPool;
+import com.github.Aseeef.AseefianProxyPool;
 import com.github.Aseeef.PoolConfig;
 import com.github.Aseeef.ProxyConnection;
 
@@ -25,7 +25,7 @@ public class PoolTester {
         try {
             File file = new File("Webshare 10 proxies.txt");
             PoolConfig config = new PoolConfig().setProxyTimeoutMillis(200);
-            ApacheProxyPool pool = new ApacheProxyPool(file, config, Proxy.Type.HTTP);
+            AseefianProxyPool pool = new AseefianProxyPool(file, config, Proxy.Type.HTTP);
             pool.init();
             System.out.println(pool.getAvailableProxies());
 

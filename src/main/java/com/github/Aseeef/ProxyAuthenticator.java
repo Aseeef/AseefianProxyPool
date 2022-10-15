@@ -7,8 +7,8 @@ import java.net.*;
 
 public class ProxyAuthenticator extends Authenticator {
 
-    private final ApacheProxyPool pool;
-    public ProxyAuthenticator(ApacheProxyPool pool) {
+    private final AseefianProxyPool pool;
+    public ProxyAuthenticator(AseefianProxyPool pool) {
         this.pool = pool;
     }
 

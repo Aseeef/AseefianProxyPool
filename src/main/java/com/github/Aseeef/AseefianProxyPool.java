@@ -2,6 +2,7 @@ package com.github.Aseeef;
 
 import com.github.Aseeef.exceptions.ExceptionHandler;
 import com.github.Aseeef.exceptions.ProxyConnectionLeakedException;
+import com.github.Aseeef.exceptions.ProxyPoolExhaustedException;
 import com.github.Aseeef.proxy.*;
 
 import java.io.*;
@@ -11,11 +12,13 @@ import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-public class ApacheProxyPool {
+public class AseefianProxyPool {
 
     private final PoolConfig poolConfig;
-    protected final ConcurrentHashMap<ProxySocketAddress, ProxyMeta> proxies = new ConcurrentHashMap<>(16, 0.75f, 3);
+    protected final ConcurrentHashMap<ProxySocketAddress, InternalProxyMeta> proxies = new ConcurrentHashMap<>(16, 0.75f, 3);
     private final ProxyAuthenticator authenticator;
     private final HashMap<String, String> defaultSystemSettings = new HashMap<>();
 
@@ -23,11 +26,11 @@ public class ApacheProxyPool {
     private ScheduledExecutorService proxyHealthTask;
     private ExecutorService proxyHealthTestThreadPool;
 
-    public ApacheProxyPool(File proxyListFile, Proxy.Type type) throws IOException {
+    public AseefianProxyPool(File proxyListFile, Proxy.Type type) throws IOException {
         this(proxyListFile, new PoolConfig(), type);
     }
 
-    public ApacheProxyPool(File proxyListFile, PoolConfig poolConfig, Proxy.Type type) throws IOException {
+    public AseefianProxyPool(File proxyListFile, PoolConfig poolConfig, Proxy.Type type) throws IOException {
         assert proxyListFile.exists() && proxyListFile.canRead() : "Error! Unable to access the proxy file list!";
 
         this.poolConfig = poolConfig;
@@ -46,7 +49,7 @@ public class ApacheProxyPool {
 
     }
 
-    public ApacheProxyPool(Collection<AseefianProxy> proxies, PoolConfig poolConfig) {
+    public AseefianProxyPool(Collection<AseefianProxy> proxies, PoolConfig poolConfig) {
         this.poolConfig = poolConfig;
         this.authenticator = new ProxyAuthenticator(this);
         for (AseefianProxy proxy : proxies) {
@@ -54,19 +57,19 @@ public class ApacheProxyPool {
         }
     }
 
-    public ApacheProxyPool(AseefianProxy proxy) {
+    public AseefianProxyPool(AseefianProxy proxy) {
         this(Collections.singleton(proxy), new PoolConfig());
     }
 
-    public ApacheProxyPool addProxy(AseefianProxy proxy) {
+    public AseefianProxyPool addProxy(AseefianProxy proxy) {
         if (proxy.getProxySocketAddress().getType() != Proxy.Type.HTTP && proxy.getProxySocketAddress().getType() != Proxy.Type.SOCKS) {
             throw new IllegalArgumentException("Invalid proxy type " + proxy.getProxySocketAddress().getType() + ". Please use either SOCKS or HTTP proxies!");
         }
-        this.proxies.put(proxy.getProxySocketAddress(), new ProxyMeta(proxy.getProxyCredentials().orElse(null)));
+        this.proxies.put(proxy.getProxySocketAddress(), new InternalProxyMeta(proxy.getProxyCredentials().orElse(null)));
         return this;
     }
 
-    public synchronized ApacheProxyPool init() {
+    public synchronized AseefianProxyPool init() {
         defaultSystemSettings.put("jdk.http.auth.proxying.disabledSchemes", System.getProperty("jdk.http.auth.proxying.disabledSchemes"));
         defaultSystemSettings.put("jdk.http.auth.tunneling.disabledSchemes", System.getProperty("jdk.http.auth.tunneling.disabledSchemes"));
         System.setProperty("jdk.http.auth.proxying.disabledSchemes", "");
@@ -93,29 +96,31 @@ public class ApacheProxyPool {
         }
 
         // todo: 1 thread should be enough for this.. right?
-        leakTesterService = Executors.newScheduledThreadPool(1, r -> createThread("Proxy Leak Test", r));
-        leakTesterService.scheduleAtFixedRate(() -> {
-            for (Map.Entry<ProxySocketAddress, ProxyMeta> set : this.proxies.entrySet()) {
-                // skip leak test if its either in the pool already or its dead
-                ProxyMeta meta = set.getValue();
-                long timeTaken = meta.getTimeTaken();
-                // skip test for proxies in the pool, dead proxies, and proxies being inspected
-                if (timeTaken == -1 || !meta.isAlive() || meta.isInspecting()) {
-                    continue;
-                }
-                // skip test for already leaked proxies
-                if (set.getValue().isLeaked() || set.getValue().getStackBorrower() == null)
-                    continue;
+        if (poolConfig.getConnectionLeakThreshold() > 0) {
+            leakTesterService = Executors.newScheduledThreadPool(1, r -> createThread("Proxy Leak Test", r));
+            leakTesterService.scheduleAtFixedRate(() -> {
+                for (Map.Entry<ProxySocketAddress, InternalProxyMeta> set : this.proxies.entrySet()) {
+                    // skip leak test if its either in the pool already or its dead
+                    InternalProxyMeta meta = set.getValue();
+                    long timeTaken = meta.getTimeTaken();
+                    // skip test for proxies in the pool, dead proxies, proxies with meta "skip leak" and proxies being inspected
+                    if (timeTaken == -1 || !meta.isAlive() || meta.isInspecting() || meta.isSkipLeakTest()) {
+                        continue;
+                    }
+                    // skip test for already leaked proxies
+                    if (set.getValue().isLeaked() || set.getValue().getStackBorrower() == null)
+                        continue;
 
-                if (System.currentTimeMillis() - timeTaken > poolConfig.getConnectionLeakThreshold()) {
-                    meta.setLeaked(true);
-                    new ProxyConnectionLeakedException(
-                            "Detected a proxy leak for the following proxy: " + set.getKey().toString() + " (leaked since " + (System.currentTimeMillis() - timeTaken) + "ms ago)",
-                            meta.getStackBorrower()
-                    ).printStackTrace();
+                    if (System.currentTimeMillis() - timeTaken > poolConfig.getConnectionLeakThreshold()) {
+                        meta.setLeaked(true);
+                        new ProxyConnectionLeakedException(
+                                "Detected a proxy leak for the following proxy: " + set.getKey().toString() + " (leaked since " + (System.currentTimeMillis() - timeTaken) + "ms ago)",
+                                meta.getStackBorrower()
+                        ).printStackTrace();
+                    }
                 }
-            }
-        }, 0, poolConfig.getLeakTestFrequencyMillis(), TimeUnit.MILLISECONDS);
+            }, 0, poolConfig.getLeakTestFrequencyMillis(), TimeUnit.MILLISECONDS);
+        }
 
         if (this.getActiveProxies() <= 0) {
             throw new IllegalStateException("Error! Unable to initialize the pool because we were unable to secure any healthy proxies!");
@@ -134,7 +139,7 @@ public class ApacheProxyPool {
         return thread;
     }
 
-    public synchronized ApacheProxyPool close() {
+    public synchronized AseefianProxyPool close() {
         Authenticator.setDefault(null);
         for (Map.Entry<String, String> set : defaultSystemSettings.entrySet()) {
             System.setProperty(set.getKey(), set.getValue());
@@ -151,7 +156,7 @@ public class ApacheProxyPool {
      * @return the number of proxies available in the pool
      */
     public int getAvailableProxies() {
-        return (int) this.proxies.values().stream().filter(pm -> pm.isInPool()).count();
+        return (int) this.proxies.values().stream().filter(InternalProxyMeta::isInPool).count();
     }
 
     /**
@@ -163,12 +168,12 @@ public class ApacheProxyPool {
 
     private void testProxies() {
         List<Future<?>> futures = new ArrayList<>(this.proxies.size());
-        for (Map.Entry<ProxySocketAddress, ProxyMeta> set : this.proxies.entrySet()) {
+        for (Map.Entry<ProxySocketAddress, InternalProxyMeta> set : this.proxies.entrySet()) {
             // each proxy ping can take a while so it's best to submit each test in a new thread
             // for fastest and most efficient execution
             Future<?> future = proxyHealthTestThreadPool.submit(() -> {
                 ProxySocketAddress proxy = set.getKey();
-                ProxyMeta meta = set.getValue();
+                InternalProxyMeta meta = set.getValue();
                 // skip proxies that were very recently inspected
                 if (meta.getLatestHealthReport() != null && meta.getLatestHealthReport().getLastTested() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.75)) {
                     return;
@@ -212,33 +217,44 @@ public class ApacheProxyPool {
         }
     }
 
-    @Deprecated
-    public synchronized ProxyConnection getConnection(String host) {
-        ProxySocketAddress a = proxies.keySet().stream().filter(p -> p.getHost().equals(host)).findFirst().get();
-        do {
-            if (proxies.get(a).isInPool())
-                return getConnection(a, proxies.get(a));
-        } while (true);
+    /**
+     * @return a copy of the list of all registered proxies.
+     * There are no guarantees on the type, mutability, serializability, or thread-safety of the Map returned.
+     */
+    public Map<ProxySocketAddress, ProxyMetadata> getAllProxies() {
+        return proxies.entrySet().stream().map((kv) -> Map.entry(kv.getKey(), kv.getValue().getMetadata())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    public synchronized ProxyConnection getConnection() {
-        // get the most recently tested proxy
+    public ProxyConnection getConnection() {
+        return getConnection((pm) -> true, poolConfig.getDefaultConnectionWaitMillis());
+    }
+
+    public ProxyConnection getConnection(long connectionWaitMillis) {
+        return getConnection((pm) -> true, connectionWaitMillis);
+    }
+
+    public ProxyConnection getConnection(Predicate<ProxyMetadata> predicate, long connectionWaitMillis) {
+        long start = System.currentTimeMillis();
         while (true) {
-            Optional<Map.Entry<ProxySocketAddress, ProxyMeta>> set = proxies.entrySet().stream()
-                    .filter(p -> p.getValue().getLatestHealthReport().getLastTested() > System.currentTimeMillis() - poolConfig.getMinMillisTestAgo() && p.getValue().isInPool())
-                    .max(Comparator.comparingLong(i -> i.getValue().getLatestHealthReport().getLastTested()));
+            Optional<Map.Entry<ProxySocketAddress, InternalProxyMeta>> set = proxies.entrySet().stream()
+                    .filter(p -> predicate.test(p.getValue().getMetadata()) &&
+                            p.getValue().getLatestHealthReport().getLastTested() > System.currentTimeMillis() - poolConfig.getMinMillisTestAgo() &&
+                            p.getValue().isInPool())
+                    .min(Comparator.comparingLong(i -> i.getValue().getLatestHealthReport().getMillisResponseTime())); // get the proxy with the lowest response time first
             if (set.isPresent()) {
                 return getConnection(set.get().getKey(), set.get().getValue());
+            }
+            if (connectionWaitMillis > 0 && System.currentTimeMillis() - start > connectionWaitMillis) {
+                throw new ProxyPoolExhaustedException("Unable to obtain a proxy connection!");
             }
         }
     }
 
-    // todo hard limit on max number of proxies away from pool (max concurrency)
-    private ProxyConnection getConnection(ProxySocketAddress address, ProxyMeta meta) {
+    private ProxyConnection getConnection(ProxySocketAddress address, InternalProxyMeta meta) {
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
         meta.setStackBorrower(Arrays.copyOfRange(elements, 2, elements.length));
         meta.setTimeTaken(System.currentTimeMillis());
-        while(getAvailableProxies() - getActiveProxies() > poolConfig.getMaxConcurrency()) {
+        while(poolConfig.getMaxConcurrency() > 0 && getAvailableProxies() - getActiveProxies() > poolConfig.getMaxConcurrency()) {
             // getAvailableProxies() - getActiveProxies() = proxies outside the pool
             // so we wait until the proxies outside the pool are less than max concurrency
         }

@@ -4,14 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.Synchronized;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Getter(onMethod_ = {@Synchronized}) @Setter(onMethod_ = {@Synchronized})
-public class ProxyMeta {
+public class InternalProxyMeta {
 
-    public ProxyMeta(ProxyCredentials credentials) {
+    public InternalProxyMeta(ProxyCredentials credentials) {
         this.credentials = credentials;
     }
 
@@ -23,7 +21,7 @@ public class ProxyMeta {
     /**
      * User defined metadata information for this proxy
      */
-    private Map<String, Object> metadata = new ConcurrentHashMap<>();
+    private ProxyMetadata metadata = new ProxyMetadata();
 
     /**
      * The time at which this proxy was taken from the pool in epoch millis. A value of -1 indicates that this proxy is currently with in the pool.
@@ -39,6 +37,11 @@ public class ProxyMeta {
      * The last time that this proxy was validated to be working in epoch millis. A value of null indicates that this proxy has never been tested.
      */
     private volatile ProxyHealthReport latestHealthReport = null;
+
+    /**
+     * Whether to skip proxy leak test
+     */
+    private volatile boolean skipLeakTest = false;
 
     /**
      * Whether this proxy is a leaked proxy
