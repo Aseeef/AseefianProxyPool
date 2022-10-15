@@ -232,6 +232,10 @@ public class AseefianProxyPool {
         return getConnection((pm) -> true, connectionWaitMillis);
     }
 
+    public ProxyConnection getConnection(Predicate<ProxyMetadata> predicate) {
+        return getConnection(predicate, poolConfig.getDefaultConnectionWaitMillis());
+    }
+
     public ProxyConnection getConnection(Predicate<ProxyMetadata> predicate, long connectionWaitMillis) {
         long start = System.currentTimeMillis();
         while (true) {
