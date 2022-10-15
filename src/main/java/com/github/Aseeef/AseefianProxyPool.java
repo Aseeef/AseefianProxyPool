@@ -163,7 +163,7 @@ public class AseefianProxyPool {
      * @return the number of alive proxies which may be either in the pool or outside the pool.
      */
     public int getActiveProxies() {
-        return (int) this.proxies.values().stream().filter(pm -> pm.isAlive()).count();
+        return (int) this.proxies.values().stream().filter(InternalProxyMeta::isAlive).count();
     }
 
     private void testProxies() {
@@ -175,13 +175,12 @@ public class AseefianProxyPool {
                 ProxySocketAddress proxy = set.getKey();
                 InternalProxyMeta meta = set.getValue();
                 // skip proxies that were very recently inspected
-                if (meta.getLatestHealthReport() != null && meta.getLatestHealthReport().getLastTested() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.75)) {
+                if (meta.getLatestHealthReport().getLastTested() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.75)) {
                     return;
                 }
                 // skip proxies not in the pool (but dont skip "dead proxies")
                 if (meta.getTimeTaken() != -1)
                     return;
-
                 meta.setInspecting(true);
                 long ping;
                 try (ProxyConnection conn = getConnection(proxy, set.getValue())) {
@@ -203,7 +202,8 @@ public class AseefianProxyPool {
                         ex.printStackTrace();
                     ping = -1;
                 }
-                meta.setLatestHealthReport(new ProxyHealthReport(System.currentTimeMillis(), ping));
+                meta.getLatestHealthReport().setLastTested(System.currentTimeMillis());
+                meta.getLatestHealthReport().setMillisResponseTime(ping);
                 meta.setInspecting(false);
             });
             futures.add(future);
@@ -218,11 +218,10 @@ public class AseefianProxyPool {
     }
 
     /**
-     * @return a copy of the list of all registered proxies.
-     * There are no guarantees on the type, mutability, serializability, or thread-safety of the Map returned.
+     * @return an immutable copy of the list of all registered proxies.
      */
     public Map<ProxySocketAddress, ProxyMetadata> getAllProxies() {
-        return proxies.entrySet().stream().map((kv) -> Map.entry(kv.getKey(), kv.getValue().getMetadata())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return proxies.entrySet().stream().map((kv) -> Map.entry(kv.getKey(), kv.getValue().getMetadata())).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public ProxyConnection getConnection() {

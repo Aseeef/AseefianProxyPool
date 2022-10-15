@@ -19,9 +19,14 @@ public class InternalProxyMeta {
     private final ProxyCredentials credentials;
 
     /**
+     * The last time that this proxy was validated to be working in epoch millis. A value of null indicates that this proxy has never been tested.
+     */
+    private final ProxyHealthReport latestHealthReport = new ProxyHealthReport(-1L, -1L);
+
+    /**
      * User defined metadata information for this proxy
      */
-    private ProxyMetadata metadata = new ProxyMetadata();
+    private final ProxyMetadata metadata = new ProxyMetadata(latestHealthReport);
 
     /**
      * The time at which this proxy was taken from the pool in epoch millis. A value of -1 indicates that this proxy is currently with in the pool.
@@ -32,11 +37,6 @@ public class InternalProxyMeta {
      * The reference from the stack of who took the connection
      */
     private volatile StackTraceElement[] stackBorrower = null;
-
-    /**
-     * The last time that this proxy was validated to be working in epoch millis. A value of null indicates that this proxy has never been tested.
-     */
-    private volatile ProxyHealthReport latestHealthReport = null;
 
     /**
      * Whether to skip proxy leak test
@@ -64,7 +64,7 @@ public class InternalProxyMeta {
      * @return whether this proxy is alive based on the latest tests. If no health report tests are available, defaults to true.
      */
     public synchronized boolean isAlive() {
-        return this.latestHealthReport == null || this.latestHealthReport.isAlive();
+        return this.latestHealthReport.isAlive();
     }
 
     public Optional<ProxyCredentials> getCredentials() {
