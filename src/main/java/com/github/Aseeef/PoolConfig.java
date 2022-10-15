@@ -18,15 +18,27 @@ public class PoolConfig {
     /**
      * The minimum millis the proxy must have been tested ago to be applicable for a lease.
      */
-    private int minMillisTestAgo = 1000 * 10; // 10 seconds
+    private int minMillisTestAgo = 1000 * 60; // 60 seconds
     /**
-     * The maximum amount of time to wait for a proxy to respond.
+     * The maximum amount of time to wait for a proxy to respond in milliseconds
      */
     private int proxyTimeoutMillis = 1000 * 3; // 3 seconds
 
+    //todo
     /**
      * Whether to allow the leasing of untested proxies. When this is disabled,
      * all proxies obtained via getConnection() will have been tested to be working fine!
      */
+    private boolean testedProxiesOnly = true;
+
+    /**
+     * The frequency in milliseconds at which to test for leaks in the proxy pool.
+     */
+    private int leakTestFrequencyMillis = 10;
+
+    /**
+     * The maximum number of proxies we may concurrently access
+     */
+    private int maxConcurrency = 500;
 
 }

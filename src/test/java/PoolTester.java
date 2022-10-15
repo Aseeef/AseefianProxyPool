@@ -8,37 +8,56 @@ import java.io.FileReader;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class PoolTester {
 
     public static void main(String[] args) {
 
+        //todo: bandwith usage is too high!
+        // FIX!
+        // add proxy geoloc
+        // performance improvements
+        // fix loading speed with high num of proxies
+        // ability to add meta to proxies, retrieve proxies by those meta etc
+        // basically just more control of which proxy to get from the pool
         try {
             File file = new File("Webshare 10 proxies.txt");
-            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(3000);
+            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(200);
             ApacheProxyPool pool = new ApacheProxyPool(file, config, Proxy.Type.HTTP);
             pool.init();
+            System.out.println(pool.getAvailableProxies());
 
-            BufferedReader br = new BufferedReader(new FileReader(new File("users.csv")));
-
-
-
-            try (ProxyConnection connection = pool.getConnection("188.74.210.3")) {
+            BufferedReader br = new BufferedReader(new FileReader("users.csv"));
+            ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+            try (ProxyConnection connection = pool.getConnection()) {
                 while (br.ready()) {
                     long l = System.currentTimeMillis();
                     HttpURLConnection get = (HttpURLConnection) connection.connect(String.format("https://sessionserver.mojang.com/session/minecraft/profile/%s", br.readLine().toLowerCase()));
                     get.setRequestMethod("GET");
-                    InputStream is = get.getInputStream();
-                    byte[] targetArray = new byte[is.available()];
-                    is.read(targetArray);
-                    System.out.println(new String(targetArray));
-                    System.out.println(connection.getHost());
-                    System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies());
+                    executorService.submit(() -> {
+                        try {
+                            InputStream is = get.getInputStream();
+                            byte[] targetArray = new byte[is.available()];
+                            is.read(targetArray);
+                            System.out.println(new String(targetArray));
+                            System.out.println(connection.getHost());
+                            System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies());
+                        } catch (Exception e) {}
+                    });
                 }
+            }
+
+            while (executorService.getActiveCount() != 0) {
+                Thread.sleep(100);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
+        System.out.println("DONE");
+        System.exit(0);
 
         /*
         System.setProperty("jdk.http.auth.proxying.disabledSchemes", "");

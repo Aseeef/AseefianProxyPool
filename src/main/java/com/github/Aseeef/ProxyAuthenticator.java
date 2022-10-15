@@ -23,7 +23,7 @@ public class ProxyAuthenticator extends Authenticator {
             throw new IllegalArgumentException("Unknown proxy protocol: " + getRequestingProtocol());
         }
         ProxySocketAddress address = new ProxySocketAddress(getRequestingHost(), getRequestingPort(), type);
-        ProxyCredentials creds = pool.proxies.get(address).get().getCredentials().orElse(null);
+        ProxyCredentials creds = pool.proxies.get(address).getCredentials().orElse(null);
         if (creds == null)
             throw new IllegalArgumentException("No credentials provided for the following proxy: " + address);
         return new PasswordAuthentication(creds.getUsername(), creds.getPassword().toCharArray());
