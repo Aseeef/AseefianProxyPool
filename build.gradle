@@ -8,8 +8,8 @@ plugins {
 group 'com.github.Aseeef'
 version '1.0.0'
 
-sourceCompatibility.java8
-targetCompatibility.java8
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 compileJava.options.encoding = "UTF-8"
 compileTestJava.options.encoding = "UTF-8"
 

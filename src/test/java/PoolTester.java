@@ -10,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collectors;
 
 public class PoolTester {
 
@@ -24,10 +25,10 @@ public class PoolTester {
         // basically just more control of which proxy to get from the pool
         try {
             File file = new File("Webshare 10 proxies.txt");
-            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(200);
+            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(2000);
             AseefianProxyPool pool = new AseefianProxyPool(file, config, Proxy.Type.HTTP);
             pool.init();
-            System.out.println(pool.getAvailableProxies());
+            System.out.println(pool.getAllProxies().entrySet().stream().filter(kv -> !kv.getValue().getProxyHealthReport().isAlive()).collect(Collectors.toList()));
 
             BufferedReader br = new BufferedReader(new FileReader("users.csv"));
             ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);

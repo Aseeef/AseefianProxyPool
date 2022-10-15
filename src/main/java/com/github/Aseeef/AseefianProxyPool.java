@@ -221,7 +221,8 @@ public class AseefianProxyPool {
      * @return an immutable copy of the list of all registered proxies.
      */
     public Map<ProxySocketAddress, ProxyMetadata> getAllProxies() {
-        return proxies.entrySet().stream().map((kv) -> Map.entry(kv.getKey(), kv.getValue().getMetadata())).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+        return proxies.entrySet().stream().parallel().map((kv) -> new Object[]{kv.getKey(), kv.getValue().getMetadata()})
+                .collect(Collectors.toConcurrentMap(o -> (ProxySocketAddress) o[0], o -> (ProxyMetadata) o[1]));
     }
 
     public ProxyConnection getConnection() {
