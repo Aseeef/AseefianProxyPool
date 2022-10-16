@@ -37,6 +37,10 @@ public class ProxyConnection extends Proxy implements Closeable {
         return proxy.getHost();
     }
 
+    public ProxySocketAddress getProxyAddress() {
+        return proxy;
+    }
+
     public Map<String, Object> getMetadata() {
         return pool.proxies.get(proxy).getMetadata();
     }
