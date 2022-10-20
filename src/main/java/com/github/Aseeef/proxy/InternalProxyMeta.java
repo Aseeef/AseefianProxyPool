@@ -29,9 +29,11 @@ public class InternalProxyMeta {
     private final ProxyMetadata metadata = new ProxyMetadata(latestHealthReport);
 
     /**
-     * The time at which this proxy was taken from the pool in epoch millis. A value of -1 indicates that this proxy is currently with in the pool.
+     * The time at which this proxy was taken last taken from the pool in epoch millis. A value of -1 indicates that this proxy has never been used.
      */
     private volatile long timeTaken = -1L;
+
+    private volatile boolean inPool = true;
 
     /**
      * The reference from the stack of who took the connection
@@ -57,7 +59,7 @@ public class InternalProxyMeta {
      * @return true if in the pool and false otherwise
      */
     public synchronized boolean isInPool() {
-        return this.timeTaken == -1 && this.isAlive();
+        return this.inPool && this.isAlive();
     }
 
     /**

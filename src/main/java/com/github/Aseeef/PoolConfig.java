@@ -1,8 +1,13 @@
 package com.github.Aseeef;
 
+import com.github.Aseeef.proxy.InternalProxyMeta;
+import com.github.Aseeef.proxy.ProxySocketAddress;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.util.Comparator;
+import java.util.Map;
 
 @Getter @Setter @Accessors(chain = true)
 public class PoolConfig {
@@ -54,5 +59,37 @@ public class PoolConfig {
      * Set this value to less than or equal to zero to disable this feature.
      */
     private int maxConcurrency = 500;
+
+    /**
+     * This value is the sorting mode using which getConnection() decides which
+     * proxy to return to you from the available pool.
+     */
+    private SortingMode sortingMode = SortingMode.LATENCY;
+
+    private Comparator<Map.Entry<ProxySocketAddress, InternalProxyMeta>> customProxySorter = null;
+
+    public enum SortingMode {
+        /**
+         * Sorts based on which proxy was used last. Whichever proxy hasn't been used
+         * from the pool the longest is the proxy that is returned. Default sorting mode.
+         */
+        LAST_USED,
+        /**
+         * This mode sorts proxies based of when the proxy was last confirmed to be working.
+         * Which every proxy was most recently confirmed working is what is returned.
+         */
+        LAST_CHECKED,
+        /**
+         * This mode sorts proxies based of which proxy has the lowest latency
+         * from this JVM to the closest aws datacenter.
+         */
+        LATENCY,
+        /**
+         * If you want to sort the proxy based on your own parameters,
+         * use this sorting mode and define a proxy sorting comparator by setting
+         * a value for {@link PoolConfig#customProxySorter}.
+         */
+        CUSTOM,
+    }
 
 }

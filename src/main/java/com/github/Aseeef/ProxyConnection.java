@@ -54,7 +54,7 @@ public class ProxyConnection extends Proxy implements Closeable {
     @Override
     public synchronized void close() {
         assert !pool.proxies.get(proxy).isInPool() : "Error. The proxy was already in the pool. This should never happen!";
-        pool.proxies.get(proxy).setTimeTaken(-1);
+        pool.proxies.get(proxy).setInPool(true);
         pool.proxies.get(proxy).setStackBorrower(null);
         pool.proxies.get(proxy).setSkipLeakTest(false);
         if (pool.proxies.get(proxy).isLeaked()) {

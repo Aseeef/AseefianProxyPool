@@ -190,7 +190,7 @@ public class AseefianProxyPool {
                         // 1. amazon stays reliably online
                         // 2. multiple servers around the world
                         // 3. uses little bandwith
-                        HttpURLConnection connection = (HttpURLConnection) conn.connect("http://checkip.amazonaws.com");
+                        HttpURLConnection connection = conn.connect("http://checkip.amazonaws.com");
                         connection.setConnectTimeout(poolConfig.getProxyTimeoutMillis());
                         connection.setInstanceFollowRedirects(false);
                         ping = System.currentTimeMillis();
@@ -239,11 +239,31 @@ public class AseefianProxyPool {
     public ProxyConnection getConnection(Predicate<ProxyMetadata> predicate, long connectionWaitMillis) {
         long start = System.currentTimeMillis();
         while (true) {
+            Comparator<Map.Entry<ProxySocketAddress, InternalProxyMeta>> proxySorter;
+            assert poolConfig.getSortingMode() != null;
+            switch (poolConfig.getSortingMode()) {
+                case LATENCY:
+                    proxySorter = Comparator.comparingLong(entry -> entry.getValue().getLatestHealthReport().getMillisResponseTime());
+                    break;
+                case LAST_USED:
+                    proxySorter = Comparator.comparingLong(entry -> entry.getValue().getTimeTaken());
+                    break;
+                case LAST_CHECKED:
+                    proxySorter = Comparator.comparing(entry -> System.currentTimeMillis() - entry.getValue().getLatestHealthReport().getLastTested());
+                    break;
+                case CUSTOM:
+                    proxySorter = poolConfig.getCustomProxySorter();
+                    if (proxySorter == null) {
+                        throw new IllegalStateException("The custom proxy sorter must be set when using a custom proxy sorting mode!");
+                    }
+                default:
+                    throw new IllegalStateException();
+            }
             Optional<Map.Entry<ProxySocketAddress, InternalProxyMeta>> set = proxies.entrySet().stream()
                     .filter(p -> predicate.test(p.getValue().getMetadata()) &&
                             p.getValue().getLatestHealthReport().getLastTested() > System.currentTimeMillis() - poolConfig.getMinMillisTestAgo() &&
                             p.getValue().isInPool())
-                    .min(Comparator.comparingLong(i -> i.getValue().getLatestHealthReport().getMillisResponseTime())); // get the proxy with the lowest response time first
+                    .min(proxySorter); // get the proxy with the lowest response time first
             if (set.isPresent()) {
                 return getConnection(set.get().getKey(), set.get().getValue());
             }
@@ -276,6 +296,7 @@ public class AseefianProxyPool {
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
         meta.setStackBorrower(Arrays.copyOfRange(elements, 2, elements.length));
         meta.setTimeTaken(System.currentTimeMillis());
+        meta.setInPool(false);
         while(poolConfig.getMaxConcurrency() > 0 && getAvailableProxies() - getActiveProxies() > poolConfig.getMaxConcurrency()) {
             // getAvailableProxies() - getActiveProxies() = proxies outside the pool
             // so we wait until the proxies outside the pool are less than max concurrency
