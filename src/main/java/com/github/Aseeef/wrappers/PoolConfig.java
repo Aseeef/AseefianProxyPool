@@ -32,9 +32,9 @@ public class PoolConfig {
     private boolean testProxies = true;
 
     /**
-     * The minimum millis the proxy must have been tested ago to be applicable for a lease.
+     * How often to test proxies in milliseconds to ensure that they are still working?
      */
-    private int minMillisTestAgo = 1000 * 60; // 60 seconds
+    private int proxyTestFrequency = 1000 * 15; // 15 seconds
 
     /**
      * The maximum amount of time to wait for a proxy to respond in milliseconds

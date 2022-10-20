@@ -18,10 +18,14 @@ public class PoolTester {
 
         try {
             File file = new File("Webshare 10 proxies.txt");
-            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(50);
+            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(200).setDefaultConnectionWaitMillis(2000);
             AseefianProxyPool pool = new AseefianProxyPool(file, config, Proxy.Type.HTTP);
             pool.init();
-            System.out.println(pool.getAllProxies().entrySet().stream().map(kv -> kv.getValue().getProxyHealthReport().getMillisResponseTime()).collect(Collectors.toList()));
+            System.out.println(pool.getAllProxies().values().stream().map(proxyMetadata -> proxyMetadata.getProxyHealthReport().getMillisResponseTime()).collect(Collectors.toList()));
+
+            System.out.println("testing getting conn");
+            pool.getConnection().close();
+            System.out.println("end");
 
             BufferedReader br = new BufferedReader(new FileReader("users.csv"));
             ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);

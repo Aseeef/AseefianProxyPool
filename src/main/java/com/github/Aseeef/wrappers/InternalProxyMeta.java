@@ -56,13 +56,6 @@ public class InternalProxyMeta {
     private volatile boolean inspecting = false;
 
     /**
-     * @return true if in the pool and false otherwise
-     */
-    public synchronized boolean isInPool() {
-        return this.inPool && this.isAlive();
-    }
-
-    /**
      * @return whether this proxy is alive based on the latest tests. If no health report tests are available, defaults to true.
      */
     public synchronized boolean isAlive() {

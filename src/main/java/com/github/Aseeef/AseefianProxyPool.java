@@ -88,7 +88,7 @@ public class AseefianProxyPool {
 
         if (poolConfig.isTestProxies()) {
             proxyHealthTask = Executors.newScheduledThreadPool(1, r -> createThread("Proxy Health Task", r));
-            proxyHealthTask.scheduleAtFixedRate(this::testProxies, 0, poolConfig.getLeakTestFrequencyMillis(), TimeUnit.MILLISECONDS);
+            proxyHealthTask.scheduleAtFixedRate(this::testProxies, poolConfig.getProxyTestFrequency(), poolConfig.getProxyTestFrequency(), TimeUnit.MILLISECONDS);
         }
 
         // todo: 1 thread should be enough for this.. right?
@@ -128,14 +128,14 @@ public class AseefianProxyPool {
     }
 
     /**
-     * @return the number of proxies available in the pool
+     * @return the number of proxies available in the pool (that are in the pool AND alive)
      */
     public int getAvailableProxies() {
-        return (int) this.proxies.values().stream().filter(InternalProxyMeta::isInPool).count();
+        return (int) this.proxies.values().stream().filter(ipm -> ipm.isInPool() && ipm.isAlive()).count();
     }
 
     /**
-     * @return the number of alive proxies which may be either in the pool or outside the pool.
+     * @return the number of alive proxies which may be either in the pool or outside the pool (but are all alive).
      */
     public int getActiveProxies() {
         return (int) this.proxies.values().stream().filter(InternalProxyMeta::isAlive).count();
@@ -184,9 +184,8 @@ public class AseefianProxyPool {
         long start = System.currentTimeMillis();
         while (true) {
             Optional<Map.Entry<ProxySocketAddress, InternalProxyMeta>> set = proxies.entrySet().stream()
-                    .filter(p -> predicate.test(p.getValue().getMetadata()) &&
-                            p.getValue().getLatestHealthReport().getLastTested() > System.currentTimeMillis() - poolConfig.getMinMillisTestAgo() &&
-                            p.getValue().isInPool())
+                    // filter to only proxies actively in pool AND alive
+                    .filter(p -> predicate.test(p.getValue().getMetadata()) && p.getValue().isInPool() && p.getValue().isAlive())
                     .min(getSorter()); // get the proxy with the lowest response time first
             if (set.isPresent()) {
                 return getConnection(set.get().getKey(), set.get().getValue());
@@ -226,8 +225,7 @@ public class AseefianProxyPool {
         long start = System.currentTimeMillis();
         while (true) {
             Optional<Map.Entry<ProxySocketAddress, InternalProxyMeta>> set = proxies.entrySet().stream()
-                    .filter(p -> p.getKey().equals(address) &&
-                            p.getValue().isInPool()).findFirst(); // get the proxy with the lowest response time first
+                    .filter(p -> p.getKey().equals(address) && p.getValue().isInPool() && p.getValue().isAlive()).findFirst(); // get the proxy with the lowest response time first
             if (set.isPresent()) {
                 return getConnection(set.get().getKey(), set.get().getValue());
             }

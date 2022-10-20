@@ -18,10 +18,6 @@ public class ProxyHealthTester implements Runnable{
     }
     @Override
     public void run() {
-        // skip proxies that were very recently inspected
-        if (meta.getLatestHealthReport().getLastTested() > System.currentTimeMillis() - (pool.poolConfig.getMinMillisTestAgo() * 0.75)) {
-            return;
-        }
         // skip proxies not in the pool (but dont skip "dead proxies")
         if (meta.isInPool())
             return;
