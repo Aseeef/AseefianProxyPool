@@ -19,7 +19,7 @@ public class ProxyHealthTester implements Runnable{
     @Override
     public void run() {
         // skip proxies not in the pool (but dont skip "dead proxies")
-        if (meta.isInPool())
+        if (!meta.isInPool())
             return;
         meta.setInspecting(true);
         long ping;
@@ -42,5 +42,6 @@ public class ProxyHealthTester implements Runnable{
         meta.getLatestHealthReport().setLastTested(System.currentTimeMillis());
         meta.getLatestHealthReport().setMillisResponseTime(ping);
         meta.setInspecting(false);
+        System.out.println("SET HEALTH");
     }
 }
