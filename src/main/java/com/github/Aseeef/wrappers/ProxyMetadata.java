@@ -1,4 +1,4 @@
-package com.github.Aseeef.proxy;
+package com.github.Aseeef.wrappers;
 
 import lombok.Getter;
 import lombok.ToString;

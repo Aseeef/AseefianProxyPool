@@ -1,7 +1,7 @@
 package com.github.Aseeef;
 
-import com.github.Aseeef.proxy.ProxyHealthReport;
-import com.github.Aseeef.proxy.ProxySocketAddress;
+import com.github.Aseeef.wrappers.ProxyHealthReport;
+import com.github.Aseeef.wrappers.ProxySocketAddress;
 
 import java.io.Closeable;
 import java.io.IOException;

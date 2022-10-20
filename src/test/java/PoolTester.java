@@ -1,5 +1,5 @@
 import com.github.Aseeef.AseefianProxyPool;
-import com.github.Aseeef.PoolConfig;
+import com.github.Aseeef.wrappers.PoolConfig;
 import com.github.Aseeef.ProxyConnection;
 
 import java.io.BufferedReader;

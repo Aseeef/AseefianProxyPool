@@ -1,16 +1,13 @@
 package com.github.Aseeef;
 
 import com.github.Aseeef.exceptions.ExceptionHandler;
-import com.github.Aseeef.exceptions.ProxyConnectionLeakedException;
 import com.github.Aseeef.exceptions.ProxyPoolExhaustedException;
-import com.github.Aseeef.proxy.*;
+import com.github.Aseeef.wrappers.*;
 import lombok.SneakyThrows;
 
 import java.io.*;
 import java.net.Authenticator;
-import java.net.HttpURLConnection;
 import java.net.Proxy;
-import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
@@ -18,10 +15,10 @@ import java.util.stream.Collectors;
 
 public class AseefianProxyPool {
 
-    private final PoolConfig poolConfig;
+    protected final PoolConfig poolConfig;
     protected final ConcurrentHashMap<ProxySocketAddress, InternalProxyMeta> proxies = new ConcurrentHashMap<>(16, 0.75f, 3);
-    private final ProxyAuthenticator authenticator;
-    private final HashMap<String, String> defaultSystemSettings = new HashMap<>();
+    protected final ProxyAuthenticator authenticator;
+    protected final HashMap<String, String> defaultSystemSettings = new HashMap<>();
 
     private ScheduledExecutorService leakTesterService;
     private ScheduledExecutorService proxyHealthTask;
@@ -46,8 +43,6 @@ public class AseefianProxyPool {
             }
             addProxy(new AseefianProxy(address, credentials));
         }
-
-
     }
 
     public AseefianProxyPool(Collection<AseefianProxy> proxies, PoolConfig poolConfig) {
@@ -99,28 +94,7 @@ public class AseefianProxyPool {
         // todo: 1 thread should be enough for this.. right?
         if (poolConfig.getConnectionLeakThreshold() > 0) {
             leakTesterService = Executors.newScheduledThreadPool(1, r -> createThread("Proxy Leak Test", r));
-            leakTesterService.scheduleAtFixedRate(() -> {
-                for (Map.Entry<ProxySocketAddress, InternalProxyMeta> set : this.proxies.entrySet()) {
-                    // skip leak test if its either in the pool already or its dead
-                    InternalProxyMeta meta = set.getValue();
-                    long timeTaken = meta.getTimeTaken();
-                    // skip test for proxies in the pool, dead proxies, proxies with meta "skip leak" and proxies being inspected
-                    if (timeTaken == -1 || !meta.isAlive() || meta.isInspecting() || meta.isSkipLeakTest()) {
-                        continue;
-                    }
-                    // skip test for already leaked proxies
-                    if (set.getValue().isLeaked() || set.getValue().getStackBorrower() == null)
-                        continue;
-
-                    if (System.currentTimeMillis() - timeTaken > poolConfig.getConnectionLeakThreshold()) {
-                        meta.setLeaked(true);
-                        new ProxyConnectionLeakedException(
-                                "Detected a proxy leak for the following proxy: " + set.getKey().toString() + " (leaked since " + (System.currentTimeMillis() - timeTaken) + "ms ago)",
-                                meta.getStackBorrower()
-                        ).printStackTrace();
-                    }
-                }
-            }, 0, poolConfig.getLeakTestFrequencyMillis(), TimeUnit.MILLISECONDS);
+            leakTesterService.scheduleAtFixedRate(new ProxyLeakTester(this), 0, poolConfig.getLeakTestFrequencyMillis(), TimeUnit.MILLISECONDS);
         }
 
         if (this.getActiveProxies() <= 0) {
@@ -173,40 +147,10 @@ public class AseefianProxyPool {
         for (Map.Entry<ProxySocketAddress, InternalProxyMeta> set : this.proxies.entrySet()) {
             // each proxy ping can take a while so it's best to submit each test in a new thread
             // for fastest and most efficient execution
-            Future<?> future = proxyHealthTestThreadPool.submit(() -> {
-                    ProxySocketAddress proxy = set.getKey();
-                    InternalProxyMeta meta = set.getValue();
-                    // skip proxies that were very recently inspected
-                    if (meta.getLatestHealthReport().getLastTested() > System.currentTimeMillis() - (poolConfig.getMinMillisTestAgo() * 0.75)) {
-                        return;
-                    }
-                    // skip proxies not in the pool (but dont skip "dead proxies")
-                    if (meta.getTimeTaken() != -1)
-                        return;
-                    meta.setInspecting(true);
-                    long ping;
-                    try (ProxyConnection conn = getConnection(proxy, set.getValue())) {
-                        // using this ip testing method because
-                        // 1. amazon stays reliably online
-                        // 2. multiple servers around the world
-                        // 3. uses little bandwith
-                        HttpURLConnection connection = conn.connect("http://checkip.amazonaws.com");
-                        connection.setConnectTimeout(poolConfig.getProxyTimeoutMillis());
-                        connection.setInstanceFollowRedirects(false);
-                        ping = System.currentTimeMillis();
-                        connection.connect();
-                        ping = System.currentTimeMillis() - ping;
-                    } catch (Exception ex) {
-                        if (!(ex instanceof SocketTimeoutException))
-                            ex.printStackTrace();
-                        ping = -1;
-                    }
-                    meta.getLatestHealthReport().setLastTested(System.currentTimeMillis());
-                    meta.getLatestHealthReport().setMillisResponseTime(ping);
-                    meta.setInspecting(false);
-            });
+            Future<?> future = proxyHealthTestThreadPool.submit(new ProxyHealthTester(this, set.getKey(), set.getValue()));
             futures.add(future);
         }
+        // wait till all proxies are done testing before returning
         for (Future<?> f : futures) {
             try {
                 f.get();
@@ -239,31 +183,11 @@ public class AseefianProxyPool {
     public ProxyConnection getConnection(Predicate<ProxyMetadata> predicate, long connectionWaitMillis) {
         long start = System.currentTimeMillis();
         while (true) {
-            Comparator<Map.Entry<ProxySocketAddress, InternalProxyMeta>> proxySorter;
-            assert poolConfig.getSortingMode() != null;
-            switch (poolConfig.getSortingMode()) {
-                case LATENCY:
-                    proxySorter = Comparator.comparingLong(entry -> entry.getValue().getLatestHealthReport().getMillisResponseTime());
-                    break;
-                case LAST_USED:
-                    proxySorter = Comparator.comparingLong(entry -> entry.getValue().getTimeTaken());
-                    break;
-                case LAST_CHECKED:
-                    proxySorter = Comparator.comparing(entry -> System.currentTimeMillis() - entry.getValue().getLatestHealthReport().getLastTested());
-                    break;
-                case CUSTOM:
-                    proxySorter = poolConfig.getCustomProxySorter();
-                    if (proxySorter == null) {
-                        throw new IllegalStateException("The custom proxy sorter must be set when using a custom proxy sorting mode!");
-                    }
-                default:
-                    throw new IllegalStateException();
-            }
             Optional<Map.Entry<ProxySocketAddress, InternalProxyMeta>> set = proxies.entrySet().stream()
                     .filter(p -> predicate.test(p.getValue().getMetadata()) &&
                             p.getValue().getLatestHealthReport().getLastTested() > System.currentTimeMillis() - poolConfig.getMinMillisTestAgo() &&
                             p.getValue().isInPool())
-                    .min(proxySorter); // get the proxy with the lowest response time first
+                    .min(getSorter()); // get the proxy with the lowest response time first
             if (set.isPresent()) {
                 return getConnection(set.get().getKey(), set.get().getValue());
             }
@@ -271,6 +195,27 @@ public class AseefianProxyPool {
                 throw new ProxyPoolExhaustedException("Unable to obtain a proxy connection!");
             }
         }
+    }
+
+    private Comparator<Map.Entry<ProxySocketAddress, InternalProxyMeta>> getSorter() {
+        Comparator<Map.Entry<ProxySocketAddress, InternalProxyMeta>> proxySorter;
+        assert poolConfig.getSortingMode() != null;
+        switch (poolConfig.getSortingMode()) {
+            case LATENCY:
+                proxySorter = Comparator.comparingLong(entry -> entry.getValue().getLatestHealthReport().getMillisResponseTime());
+                break;
+            case LAST_USED:
+                proxySorter = Comparator.comparingLong(entry -> entry.getValue().getTimeTaken());
+                break;
+            case CUSTOM:
+                proxySorter = poolConfig.getCustomProxySorter();
+                if (proxySorter == null) {
+                    throw new IllegalStateException("The custom proxy sorter must be set when using a custom proxy sorting mode!");
+                }
+            default:
+                throw new IllegalStateException();
+        }
+        return proxySorter;
     }
 
     public ProxyConnection getConnection(ProxySocketAddress address) {
@@ -292,7 +237,7 @@ public class AseefianProxyPool {
         }
     }
 
-    private ProxyConnection getConnection(ProxySocketAddress address, InternalProxyMeta meta) {
+    protected ProxyConnection getConnection(ProxySocketAddress address, InternalProxyMeta meta) {
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
         meta.setStackBorrower(Arrays.copyOfRange(elements, 2, elements.length));
         meta.setTimeTaken(System.currentTimeMillis());

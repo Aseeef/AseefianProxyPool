@@ -1,7 +1,6 @@
-package com.github.Aseeef;
+package com.github.Aseeef.wrappers;
 
-import com.github.Aseeef.proxy.InternalProxyMeta;
-import com.github.Aseeef.proxy.ProxySocketAddress;
+import com.github.Aseeef.AseefianProxyPool;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -74,11 +73,6 @@ public class PoolConfig {
          * from the pool the longest is the proxy that is returned. Default sorting mode.
          */
         LAST_USED,
-        /**
-         * This mode sorts proxies based of when the proxy was last confirmed to be working.
-         * Which every proxy was most recently confirmed working is what is returned.
-         */
-        LAST_CHECKED,
         /**
          * This mode sorts proxies based of which proxy has the lowest latency
          * from this JVM to the closest aws datacenter.
