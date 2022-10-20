@@ -42,6 +42,5 @@ public class ProxyHealthTester implements Runnable{
         meta.getLatestHealthReport().setLastTested(System.currentTimeMillis());
         meta.getLatestHealthReport().setMillisResponseTime(ping);
         meta.setInspecting(false);
-        System.out.println("SET HEALTH");
     }
 }
