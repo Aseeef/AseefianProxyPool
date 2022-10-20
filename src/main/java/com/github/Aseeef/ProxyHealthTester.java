@@ -23,7 +23,7 @@ public class ProxyHealthTester implements Runnable{
             return;
         }
         // skip proxies not in the pool (but dont skip "dead proxies")
-        if (meta.getTimeTaken() != -1)
+        if (meta.isInPool())
             return;
         meta.setInspecting(true);
         long ping;

@@ -65,6 +65,11 @@ public class PoolConfig {
      */
     private SortingMode sortingMode = SortingMode.LATENCY;
 
+    /**
+     * The custom proxy sorter. This setting has no affect unless {@link PoolConfig#sortingMode} is set to
+     * {@link SortingMode#CUSTOM}. When implementing your comparator, keep in mind that the pool
+     * will choose the min element from the sorted list of valid proxies.
+     */
     private Comparator<Map.Entry<ProxySocketAddress, InternalProxyMeta>> customProxySorter = null;
 
     public enum SortingMode {

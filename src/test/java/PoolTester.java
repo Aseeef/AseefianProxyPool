@@ -24,23 +24,22 @@ public class PoolTester {
             System.out.println(pool.getAllProxies().entrySet().stream().map(kv -> kv.getValue().getProxyHealthReport().getMillisResponseTime()).collect(Collectors.toList()));
 
             BufferedReader br = new BufferedReader(new FileReader("users.csv"));
-            ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
-            try (ProxyConnection connection = pool.getConnection()) {
-                while (br.ready()) {
-                    long l = System.currentTimeMillis();
-                    HttpURLConnection get = (HttpURLConnection) connection.connect(String.format("https://sessionserver.mojang.com/session/minecraft/profile/%s", br.readLine().toLowerCase()));
-                    get.setRequestMethod("GET");
-                    executorService.submit(() -> {
-                        try {
-                            InputStream is = get.getInputStream();
-                            byte[] targetArray = new byte[is.available()];
-                            is.read(targetArray);
-                            //System.out.println(new String(targetArray));
-                            //System.out.println(connection.getHost());
-                            //System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies());
-                        } catch (Exception e) {}
-                    });
-                }
+            ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
+            while (br.ready()) {
+                long l = System.currentTimeMillis();
+                executorService.submit(() -> {
+                    try (ProxyConnection connection = pool.getConnection()) {
+                        HttpURLConnection get = (HttpURLConnection) connection.connect(String.format("https://sessionserver.mojang.com/session/minecraft/profile/%s", br.readLine().toLowerCase()));
+                        get.setRequestMethod("GET");
+                        InputStream is = get.getInputStream();
+                        byte[] targetArray = new byte[is.available()];
+                        is.read(targetArray);
+                        System.out.println(new String(targetArray));
+                        //System.out.println(connection.getHost());
+                        //System.out.println(System.currentTimeMillis() - l + "ms" + pool.getAvailableProxies());
+                    } catch (Exception e) {
+                    }
+                });
             }
 
             while (executorService.getActiveCount() != 0) {

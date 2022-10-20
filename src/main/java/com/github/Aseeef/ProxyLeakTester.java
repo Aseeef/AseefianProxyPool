@@ -17,9 +17,10 @@ public class ProxyLeakTester implements Runnable{
         for (Map.Entry<ProxySocketAddress, InternalProxyMeta> set : pool.proxies.entrySet()) {
             // skip leak test if its either in the pool already or its dead
             InternalProxyMeta meta = set.getValue();
+            boolean inPool = meta.isInPool();
             long timeTaken = meta.getTimeTaken();
             // skip test for proxies in the pool, dead proxies, proxies with meta "skip leak" and proxies being inspected
-            if (timeTaken == -1 || !meta.isAlive() || meta.isInspecting() || meta.isSkipLeakTest()) {
+            if (inPool || !meta.isAlive() || meta.isInspecting() || meta.isSkipLeakTest()) {
                 continue;
             }
             // skip test for already leaked proxies
