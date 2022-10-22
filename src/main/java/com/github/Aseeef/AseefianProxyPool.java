@@ -168,19 +168,19 @@ public class AseefianProxyPool {
                 .collect(Collectors.toConcurrentMap(o -> (ProxySocketAddress) o[0], o -> (ProxyMetadata) o[1]));
     }
 
-    public ProxyConnection getConnection() {
+    public synchronized ProxyConnection getConnection() {
         return getConnection((pm) -> true, poolConfig.getDefaultConnectionWaitMillis());
     }
 
-    public ProxyConnection getConnection(long connectionWaitMillis) {
+    public synchronized ProxyConnection getConnection(long connectionWaitMillis) {
         return getConnection((pm) -> true, connectionWaitMillis);
     }
 
-    public ProxyConnection getConnection(Predicate<ProxyMetadata> predicate) {
+    public synchronized ProxyConnection getConnection(Predicate<ProxyMetadata> predicate) {
         return getConnection(predicate, poolConfig.getDefaultConnectionWaitMillis());
     }
 
-    public ProxyConnection getConnection(Predicate<ProxyMetadata> predicate, long connectionWaitMillis) {
+    public synchronized ProxyConnection getConnection(Predicate<ProxyMetadata> predicate, long connectionWaitMillis) {
         long start = System.currentTimeMillis();
         while (true) {
             Optional<Map.Entry<ProxySocketAddress, InternalProxyMeta>> set = proxies.entrySet().stream()
@@ -217,7 +217,7 @@ public class AseefianProxyPool {
         return proxySorter;
     }
 
-    public ProxyConnection getConnection(ProxySocketAddress address) {
+    public synchronized ProxyConnection getConnection(ProxySocketAddress address) {
         return getConnection(address, poolConfig.getDefaultConnectionWaitMillis());
     }
 
@@ -235,7 +235,7 @@ public class AseefianProxyPool {
         }
     }
 
-    protected ProxyConnection getConnection(ProxySocketAddress address, InternalProxyMeta meta) {
+    protected synchronized ProxyConnection getConnection(ProxySocketAddress address, InternalProxyMeta meta) {
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
         meta.setStackBorrower(Arrays.copyOfRange(elements, 2, elements.length));
         meta.setTimeTaken(System.currentTimeMillis());

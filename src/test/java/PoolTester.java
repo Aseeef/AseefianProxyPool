@@ -33,7 +33,7 @@ public class PoolTester {
                 long l = System.currentTimeMillis();
                 executorService.submit(() -> {
                     try (ProxyConnection connection = pool.getConnection()) {
-                        HttpURLConnection get = (HttpURLConnection) connection.connect(String.format("https://sessionserver.mojang.com/session/minecraft/profile/%s", br.readLine().toLowerCase()));
+                        HttpURLConnection get = (HttpURLConnection) connection.getHTTPConnection(String.format("https://sessionserver.mojang.com/session/minecraft/profile/%s", br.readLine().toLowerCase()));
                         get.setRequestMethod("GET");
                         InputStream is = get.getInputStream();
                         byte[] targetArray = new byte[is.available()];
