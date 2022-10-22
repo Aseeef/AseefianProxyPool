@@ -185,7 +185,8 @@ public class AseefianProxyPool {
         while (true) {
             Optional<Map.Entry<ProxySocketAddress, InternalProxyMeta>> set = proxies.entrySet().stream()
                     // filter to only proxies actively in pool AND alive
-                    .filter(p -> predicate.test(p.getValue().getMetadata()) && p.getValue().isInPool() && p.getValue().isAlive())
+                    .filter(p -> p.getValue().isInPool() && p.getValue().isAlive())
+                    .filter(p -> predicate.test(p.getValue().getMetadata()))
                     .min(getSorter()); // get the proxy with the lowest response time first
             if (set.isPresent()) {
                 return getConnection(set.get().getKey(), set.get().getValue());

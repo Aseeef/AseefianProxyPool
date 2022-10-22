@@ -24,9 +24,10 @@ public class PoolTester {
             System.out.println(pool.getAllProxies().values().stream().map(proxyMetadata -> proxyMetadata.getProxyHealthReport().getMillisResponseTime()).collect(Collectors.toList()));
 
             System.out.println("testing getting conn");
+            long start = System.currentTimeMillis();
+            pool.getConnection(pm -> !pm.contains("sadsads")).getHTTPConnection("https://checkip.amazonaws.com/");
+            System.out.println("end " + (System.currentTimeMillis() - start));
             pool.getConnection().close();
-            System.out.println("end");
-
 
             BufferedReader br = new BufferedReader(new FileReader("users.csv"));
             ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
