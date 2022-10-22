@@ -27,6 +27,7 @@ public class PoolTester {
             pool.getConnection().close();
             System.out.println("end");
 
+
             BufferedReader br = new BufferedReader(new FileReader("users.csv"));
             ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
             while (br.ready()) {
