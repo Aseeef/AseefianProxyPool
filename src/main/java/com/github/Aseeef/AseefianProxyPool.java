@@ -232,10 +232,9 @@ public class AseefianProxyPool {
     public synchronized ProxyConnection getConnection(ProxySocketAddress address, long connectionWaitMillis) {
         long start = System.currentTimeMillis();
         while (true) {
-            Optional<Map.Entry<ProxySocketAddress, InternalProxyMeta>> set = proxies.entrySet().stream()
-                    .filter(p -> p.getKey().equals(address) && p.getValue().isInPool() && p.getValue().isAlive()).findFirst(); // get the proxy with the lowest response time first
-            if (set.isPresent()) {
-                return getConnection(set.get().getKey(), set.get().getValue());
+            InternalProxyMeta set = proxies.get(address);
+            if (set.isAlive() && set.isInPool()) {
+                return getConnection(address, set);
             }
             if (connectionWaitMillis > 0 && System.currentTimeMillis() - start > connectionWaitMillis) {
                 throw new ProxyPoolExhaustedException("Unable to obtain a proxy connection!");
