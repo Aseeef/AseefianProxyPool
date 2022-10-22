@@ -168,6 +168,15 @@ public class AseefianProxyPool {
                 .collect(Collectors.toConcurrentMap(o -> (ProxySocketAddress) o[0], o -> (ProxyMetadata) o[1]));
     }
 
+    protected String toDebugString() {
+        return proxies.entrySet().stream().map((entry) -> "Proxy[address=" + entry.getKey() + "," + "meta=" + entry.getValue() + "]").collect(Collectors.toList()).toString();
+    }
+
+    @Override
+    public String toString() {
+        return proxies.entrySet().stream().map((entry) -> "Proxy[address=" + entry.getKey() + "," + "meta=" + entry.getValue().getMetadata() + "]").collect(Collectors.toList()).toString();
+    }
+
     public synchronized ProxyConnection getConnection() {
         return getConnection((pm) -> true, poolConfig.getDefaultConnectionWaitMillis());
     }
@@ -191,7 +200,7 @@ public class AseefianProxyPool {
             if (set.isPresent()) {
                 return getConnection(set.get().getKey(), set.get().getValue());
             }
-            if (connectionWaitMillis > 0 && System.currentTimeMillis() - start > connectionWaitMillis) {
+            if (connectionWaitMillis > 0 && (System.currentTimeMillis() - start) > connectionWaitMillis) {
                 throw new ProxyPoolExhaustedException("Unable to obtain a proxy connection!");
             }
         }
@@ -222,7 +231,7 @@ public class AseefianProxyPool {
         return getConnection(address, poolConfig.getDefaultConnectionWaitMillis());
     }
 
-    //todo kinda dirty, combine with pred? Special way to o(1) filtering?? implement piroty? idk
+    // todo kinda dirty, combine with pred? Special way to o(1) filtering?? implement piroty? idk
     // todo: add sorting modes: get by least used proxy, best ping, last tested
     // todo: custom sorting predicates
     // todo: apache support
@@ -242,6 +251,7 @@ public class AseefianProxyPool {
         }
     }
 
+    //todo why no sync?
     protected ProxyConnection getConnection(ProxySocketAddress address, InternalProxyMeta meta) {
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
         meta.setStackBorrower(Arrays.copyOfRange(elements, 2, elements.length));

@@ -2,11 +2,11 @@ package com.github.Aseeef.wrappers;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.Synchronized;
+import lombok.ToString;
 
 import java.util.Optional;
 
-@Getter(onMethod_ = {@Synchronized}) @Setter(onMethod_ = {@Synchronized})
+@Getter @Setter @ToString
 public class InternalProxyMeta {
 
     public InternalProxyMeta(ProxyCredentials credentials) {

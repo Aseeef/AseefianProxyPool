@@ -1,6 +1,6 @@
 import com.github.Aseeef.AseefianProxyPool;
-import com.github.Aseeef.wrappers.PoolConfig;
 import com.github.Aseeef.ProxyConnection;
+import com.github.Aseeef.wrappers.PoolConfig;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,7 +10,6 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.stream.Collectors;
 
 public class PoolTester {
 
@@ -21,13 +20,38 @@ public class PoolTester {
             PoolConfig config = new PoolConfig().setProxyTimeoutMillis(200).setDefaultConnectionWaitMillis(2000);
             AseefianProxyPool pool = new AseefianProxyPool(file, config, Proxy.Type.HTTP);
             pool.init();
-            System.out.println(pool.getAllProxies().values().stream().map(proxyMetadata -> proxyMetadata.getProxyHealthReport().getMillisResponseTime()).collect(Collectors.toList()));
+
+            // add meta tags
+            for (int i = 0 ; i < 25 ; i++) {
+                ProxyConnection connection = pool.getConnection();
+                connection.getMetadata().put("A", 1);
+                connection.getMetadata().put("B", 2);
+                if (connection.getMetadata().containsKey("A")) {
+                    connection.getMetadata().put("A", connection.getMetadata().get("A"));
+                }
+                connection.close();
+            }
+
 
             System.out.println("testing getting conn");
             long start = System.currentTimeMillis();
-            pool.getConnection(pm -> !pm.contains("sadsads")).getHTTPConnection("https://checkip.amazonaws.com/");
+            for (int i = 0 ; i < 12 ; i++) {
+                ProxyConnection p1 = pool.getConnection(pm -> !pm.containsKey("A"));
+                p1.getHTTPConnection("https://checkip.amazonaws.com/").getInputStream().readAllBytes();
+                p1.close();
+                ProxyConnection p2 = pool.getConnection(pm -> pm.containsKey("B"));
+                p2.getHTTPConnection("https://checkip.amazonaws.com/").getInputStream().readAllBytes();
+                p2.close();
+                ProxyConnection p3 = pool.getConnection(pm -> (int) pm.getOrDefault("A", 0) >= 1);
+                p3.getHTTPConnection("https://checkip.amazonaws.com/").getInputStream().readAllBytes();
+                p3.close();
+                System.out.println(i);
+            }
             System.out.println("end " + (System.currentTimeMillis() - start));
             pool.getConnection().close();
+
+            System.exit(0);
+            if (true) return;
 
             BufferedReader br = new BufferedReader(new FileReader("users.csv"));
             ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);

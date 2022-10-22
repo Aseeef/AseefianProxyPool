@@ -3,8 +3,9 @@ package com.github.Aseeef.wrappers;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
-@AllArgsConstructor @Getter @Setter
+@AllArgsConstructor @Getter @Setter @ToString
 public class ProxyHealthReport {
     private volatile long lastTested;
     private volatile long millisResponseTime;
