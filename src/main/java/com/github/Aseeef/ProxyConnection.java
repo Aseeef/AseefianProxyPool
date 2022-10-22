@@ -5,7 +5,10 @@ import com.github.Aseeef.wrappers.ProxySocketAddress;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.URL;
 import java.util.Map;
 
 public class ProxyConnection extends Proxy implements Closeable {
@@ -22,7 +25,7 @@ public class ProxyConnection extends Proxy implements Closeable {
         this.proxy = proxy;
     }
 
-    public HttpURLConnection connect(String url) throws IOException {
+    public HttpURLConnection getHTTPConnection(String url) throws IOException {
         return (HttpURLConnection) new URL(url).openConnection(this);
     }
 

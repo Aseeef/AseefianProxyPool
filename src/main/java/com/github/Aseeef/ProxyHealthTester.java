@@ -28,7 +28,7 @@ public class ProxyHealthTester implements Runnable{
             // 1. amazon stays reliably online
             // 2. multiple servers around the world
             // 3. uses little bandwith
-            HttpURLConnection connection = conn.connect("http://checkip.amazonaws.com");
+            HttpURLConnection connection = conn.getHTTPConnection("http://checkip.amazonaws.com");
             connection.setConnectTimeout(pool.poolConfig.getProxyTimeoutMillis());
             connection.setInstanceFollowRedirects(false);
             ping = System.currentTimeMillis();
