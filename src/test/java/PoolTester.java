@@ -32,20 +32,28 @@ public class PoolTester {
                 connection.close();
             }
 
+            ThreadPoolExecutor es = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
             System.out.println("testing getting conn");
             long start = System.currentTimeMillis();
-            for (int i = 0 ; i < 12 ; i++) {
-                ProxyConnection p1 = pool.getConnection(pm -> !pm.containsKey("A"));
-                p1.getHTTPConnection("https://checkip.amazonaws.com/").getInputStream().readAllBytes();
-                p1.close();
-                ProxyConnection p2 = pool.getConnection(pm -> pm.containsKey("B"));
-                p2.getHTTPConnection("https://checkip.amazonaws.com/").getInputStream().readAllBytes();
-                p2.close();
-                ProxyConnection p3 = pool.getConnection(pm -> (int) pm.getOrDefault("A", 0) >= 1);
-                p3.getHTTPConnection("https://checkip.amazonaws.com/").getInputStream().readAllBytes();
-                p3.close();
-                System.out.println(i);
+            for (int i = 0 ; i < 5 ; i++) {
+                es.submit(() -> {
+                    try {
+
+                        long s = System.currentTimeMillis();
+                        ProxyConnection p1 = pool.getConnection(pm -> pm.containsKey("A"));
+                        System.out.println("1: " + (System.currentTimeMillis() - s));
+
+                        s = System.currentTimeMillis();
+                        p1.getHTTPConnection("https://checkip.amazonaws.com/").getInputStream().readAllBytes();
+                        p1.close();
+                        System.out.println("2: " + (System.currentTimeMillis() - s));
+
+                    } catch (Exception ex) {ex.printStackTrace();}
+                });
+            }
+            while (es.getActiveCount() != 0) {
+                Thread.sleep(1000);
             }
             System.out.println("end " + (System.currentTimeMillis() - start));
             pool.getConnection().close();

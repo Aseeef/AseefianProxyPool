@@ -58,7 +58,7 @@ public class InternalProxyMeta {
     /**
      * @return whether this proxy is alive based on the latest tests. If no health report tests are available, defaults to true.
      */
-    public synchronized boolean isAlive() {
+    public boolean isAlive() {
         return this.latestHealthReport.isAlive();
     }
 
