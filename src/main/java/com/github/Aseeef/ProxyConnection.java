@@ -1,14 +1,14 @@
 package com.github.Aseeef;
 
+import com.github.Aseeef.http.ApacheHTTPUtil;
+import com.github.Aseeef.http.HTTPProxyRequestBuilder;
 import com.github.Aseeef.wrappers.ProxyHealthReport;
 import com.github.Aseeef.wrappers.ProxySocketAddress;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.URL;
+import java.net.*;
 import java.util.Map;
 
 public class ProxyConnection extends Proxy implements Closeable {
@@ -27,6 +27,14 @@ public class ProxyConnection extends Proxy implements Closeable {
 
     public HttpURLConnection getHTTPConnection(String url) throws IOException {
         return (HttpURLConnection) new URL(url).openConnection(this);
+    }
+
+    public HTTPProxyRequestBuilder getRequestBuilder(String url) throws MalformedURLException {
+        return HTTPProxyRequestBuilder.builder(url).setProxyConnection(this);
+    }
+
+    public HttpClientBuilder getApacheClientBuilder() {
+        return ApacheHTTPUtil.getBuilder(this);
     }
 
     public ProxyHealthReport getLatestHealthReport() {

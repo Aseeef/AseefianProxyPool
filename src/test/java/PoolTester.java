@@ -1,7 +1,10 @@
 import com.github.Aseeef.AseefianProxyPool;
+import com.github.Aseeef.ProxyConnection;
+import com.github.Aseeef.http.HTTPProxyRequest;
 import com.github.Aseeef.wrappers.PoolConfig;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.Proxy;
 
 public class PoolTester {
@@ -10,9 +13,16 @@ public class PoolTester {
 
         try {
             File file = new File("Webshare 10 proxies.txt");
-            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(200).setDefaultConnectionWaitMillis(2000);
+            PoolConfig config = new PoolConfig().setProxyTimeoutMillis(200).setDefaultConnectionWaitMillis(2000).setSortingMode(PoolConfig.SortingMode.LAST_USED);
             AseefianProxyPool pool = new AseefianProxyPool(file, config, Proxy.Type.HTTP);
             pool.init();
+
+            for (int i = 0 ; i < 10 ; i++) {
+                try (ProxyConnection connection = pool.getConnection()) {
+                    HTTPProxyRequest req = connection.getRequestBuilder("http://checkip.amazonaws.com").build();
+                    System.out.println(req.getContentString());
+                }
+            }
 
         } catch (Exception ex) {
             ex.printStackTrace();

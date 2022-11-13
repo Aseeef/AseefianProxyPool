@@ -231,17 +231,14 @@ public class AseefianProxyPool {
         return getConnection(address, poolConfig.getDefaultConnectionWaitMillis());
     }
 
-    // todo kinda dirty, combine with pred? Special way to o(1) filtering?? implement piroty? idk
-    // todo: add sorting modes: get by least used proxy, best ping, last tested
-    // todo: custom sorting predicates
-    // todo: apache support
-    // todo: add ability to treat proxy in the pool if target host is different
+    // todo: add ability to treat proxy in the pool if target host is different?
     //  and on that not, also add support for max concurrency PER proxy
-    // todo: automatic saving of target hosts in the metadata
+    // todo: ensure only one thread is writing changes (transient)
     public synchronized ProxyConnection getConnection(ProxySocketAddress address, long connectionWaitMillis) {
         long start = System.currentTimeMillis();
         while (true) {
             InternalProxyMeta set = proxies.get(address);
+            assert set != null : "The requested proxy does not exist in this proxy pool!";
             if (set.isAlive() && set.isInPool()) {
                 return getConnection(address, set);
             }
