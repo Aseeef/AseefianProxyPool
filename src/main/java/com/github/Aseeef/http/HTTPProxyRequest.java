@@ -1,5 +1,7 @@
 package com.github.Aseeef.http;
 
+import lombok.Getter;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +15,7 @@ public class HTTPProxyRequest {
 
     protected URL url;
     protected HttpURLConnection urlConnection;
+    @Getter private int responseCode = -1;
 
     public HTTPProxyRequest(HTTPProxyRequestBuilder httpProxyRequest) throws IOException {
         this.url = httpProxyRequest.url;
@@ -29,12 +32,42 @@ public class HTTPProxyRequest {
         this.urlConnection.setDoInput(httpProxyRequest.requestMethod.input);
 
         if (this.urlConnection.getDoOutput()) {
+            this.urlConnection.addRequestProperty("Content-Type", httpProxyRequest.contentType.type);
             this.urlConnection.getOutputStream().write(httpProxyRequest.contentBody);
         }
     }
 
-    public InputStream getInputStream() throws IOException {
+    public HTTPProxyRequest connect() throws IOException {
         this.urlConnection.connect();
+        this.responseCode = urlConnection.getResponseCode();
+        return this;
+    }
+
+    public InputStream getErrorStream() {
+        if (this.urlConnection.getDoInput()) {
+            return this.urlConnection.getErrorStream();
+        } else {
+            return null;
+        }
+    }
+
+    public byte[] getErrorBytes() throws IOException {
+        if (this.urlConnection.getDoInput()) {
+            return streamToBytes(getErrorStream());
+        } else {
+            return null;
+        }
+    }
+
+    public String getErrorString() throws IOException {
+        return getErrorString(StandardCharsets.UTF_8);
+    }
+
+    public String getErrorString(Charset charset) throws IOException {
+        return new String(getContentBytes(), charset);
+    }
+
+    public InputStream getInputStream() throws IOException {
         if (this.urlConnection.getDoInput()) {
             return this.urlConnection.getInputStream();
         } else {
@@ -43,15 +76,8 @@ public class HTTPProxyRequest {
     }
 
     public byte[] getContentBytes() throws IOException {
-        this.urlConnection.connect();
         if (this.urlConnection.getDoInput()) {
-            InputStream stream = this.urlConnection.getInputStream();
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream(stream.available());
-            int temp;
-            while ((temp = stream.read()) != -1) {
-                outputStream.write(temp);
-            }
-            return outputStream.toByteArray();
+            return streamToBytes(getInputStream());
         } else {
             return null;
         }
@@ -63,6 +89,15 @@ public class HTTPProxyRequest {
 
     public String getContentString(Charset charset) throws IOException {
         return new String(getContentBytes(), charset);
+    }
+
+    public static byte[] streamToBytes(InputStream stream) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(stream.available());
+        int temp;
+        while ((temp = stream.read()) != -1) {
+            outputStream.write(temp);
+        }
+        return outputStream.toByteArray();
     }
 
 }
