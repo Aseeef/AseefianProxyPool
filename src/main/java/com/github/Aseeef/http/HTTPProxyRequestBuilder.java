@@ -146,15 +146,15 @@ public class HTTPProxyRequestBuilder {
         }
     }
 
-    enum RequestMethod {
+    public enum RequestMethod {
         POST(true, true),
         GET(true, false),
         DELETE(true, true),
         PUT(true, true),
         PATCH(true, true),
         ;
-        boolean input;
-        boolean output;
+        final boolean input;
+        final boolean output;
         RequestMethod(boolean input, boolean output) {
             this.input = input;
             this.output = output;
