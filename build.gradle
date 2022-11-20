@@ -33,6 +33,17 @@ configurations.all {
     }
 }
 
+// Force character encoding in case the workspace was not set up correctly
+tasks.withType(Javadoc) {
+    options.encoding = 'UTF-8'
+}
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+tasks.withType(Test) {
+    jvmArgs '-Dfile.encoding=UTF-8'
+}
+
 shadowJar {
     archiveFileName = project.name + ".jar"
     destinationDirectory = file("build")
@@ -48,15 +59,9 @@ javadoc {
     options.tags = [ "apiNote" ]
 }
 
-// Force character encoding in case the workspace was not set up correctly
-tasks.withType(Javadoc) {
-    options.encoding = 'UTF-8'
-}
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-}
-tasks.withType(Test) {
-    jvmArgs '-Dfile.encoding=UTF-8'
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 publishing {
