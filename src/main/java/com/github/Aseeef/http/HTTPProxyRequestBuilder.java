@@ -26,71 +26,132 @@ public class HTTPProxyRequestBuilder {
     protected boolean followRedirects = true;
     protected boolean useCaches = false;
 
-    public HTTPProxyRequestBuilder(String url) throws MalformedURLException {
+    protected HTTPProxyRequestBuilder(String url) throws MalformedURLException {
         this.url = new URL(url);
     }
 
-    public HTTPProxyRequestBuilder(URL url) {
+
+    protected HTTPProxyRequestBuilder(URL url) {
         this.url = url;
     }
 
+    /**
+     * Build the HTTPProxyRequest based of this request builder
+     * @return the built request that is ready to be executed!
+     * @throws IOException
+     */
     public HTTPProxyRequest build() throws IOException {
         return new HTTPProxyRequest(this);
     }
 
+    /**
+     * Set what proxy connection to use. If you used {@link ProxyConnection#getRequestBuilder(String)}
+     * to get this instance of {@link HTTPProxyRequestBuilder}, then this value was already set for you.
+     * @param proxyConnection the proxy connection
+     * @return this request builder
+     */
     public HTTPProxyRequestBuilder setProxyConnection(ProxyConnection proxyConnection) {
         this.proxyConnection = proxyConnection;
         return this;
     }
 
+    /**
+     * Set the HTTP method to use
+     * @param method the http method
+     * @return
+     */
     public HTTPProxyRequestBuilder setHTTPMethod(RequestMethod method) {
         this.requestMethod = method;
         return this;
     }
 
+    /**
+     * Set the custom content type. This value has no effect if the {@link HTTPProxyRequestBuilder#contentType} is anything other than {@link ContentType#CUSTOM}.
+     * @param customContentType the string value of the content type properly
+     * @return
+     */
     public HTTPProxyRequestBuilder setCustomContentType(String customContentType) {
         this.customContentType = customContentType;
         return this;
     }
 
+    /**
+     * Set the content type we will be posting to the http server
+     * @param contentBody the content type
+     * @return
+     */
     public HTTPProxyRequestBuilder setContentBody(String contentBody) {
         return setContentBody(contentBody, StandardCharsets.UTF_8);
     }
 
+    /**
+     * Set the value of the string content body
+     * @param contentBody the string content body
+     * @param charset the charset which the string is encoded in
+     * @return
+     */
     public HTTPProxyRequestBuilder setContentBody(String contentBody, Charset charset) {
         this.contentBody = contentBody.getBytes(charset);
         return this;
     }
 
+    /**
+     * Set the binary content body for this request
+     * @param bytes the binary content
+     * @return
+     */
     public HTTPProxyRequestBuilder setContentBody(byte[] bytes) {
         this.contentBody = bytes;
         return this;
     }
 
+    /**
+     * How long to wait before the connection times out
+     * @param millis the time in milliseconds
+     * @return
+     */
     public HTTPProxyRequestBuilder setConnectionTimeoutMillis(int millis) {
         this.connectionTimeOutMillis = millis;
         return this;
     }
 
+    /**
+     * Whether this http request should follow any redirects by the server
+     * @param follow true if to follow and false otherwise
+     * @return
+     */
     public HTTPProxyRequestBuilder setFollowRedirects(boolean follow) {
         this.followRedirects = follow;
         return this;
     }
 
+    /**
+     * Whether this http reqest should use caches
+     * @param useCaches true if to use caches and false otherwise
+     * @return
+     */
     public HTTPProxyRequestBuilder setUseCaches(boolean useCaches) {
         this.useCaches = useCaches;
         return this;
     }
 
+    /**
+     * Create an HTTPProxyRequestBuilder using the specified URL
+     * @param requestUrl the url object
+     */
     public static HTTPProxyRequestBuilder builder(URL requestUrl) {
         return new HTTPProxyRequestBuilder(requestUrl);
     }
 
+    /**
+     * Create an HTTPProxyRequestBuilder using the specified URL
+     * @param requestUrl the url as a string
+     */
     public static HTTPProxyRequestBuilder builder(String requestUrl) throws MalformedURLException {
         return new HTTPProxyRequestBuilder(requestUrl);
     }
 
-    enum ContentType {
+    public enum ContentType {
         CUSTOM(null),
 
         APPLICATION_EDI_X12("application/EDI-X12"),
