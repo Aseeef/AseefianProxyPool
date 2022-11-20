@@ -64,7 +64,7 @@ public class HTTPProxyRequest {
     }
 
     public String getErrorString(Charset charset) throws IOException {
-        return new String(getContentBytes(), charset);
+        return new String(getResponseBytes(), charset);
     }
 
     public InputStream getInputStream() throws IOException {
@@ -75,7 +75,7 @@ public class HTTPProxyRequest {
         }
     }
 
-    public byte[] getContentBytes() throws IOException {
+    public byte[] getResponseBytes() throws IOException {
         if (this.urlConnection.getDoInput()) {
             return streamToBytes(getInputStream());
         } else {
@@ -88,7 +88,7 @@ public class HTTPProxyRequest {
     }
 
     public String getContentString(Charset charset) throws IOException {
-        return new String(getContentBytes(), charset);
+        return new String(getResponseBytes(), charset);
     }
 
     public static byte[] streamToBytes(InputStream stream) throws IOException {

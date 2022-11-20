@@ -58,7 +58,7 @@ public class HTTPProxyRequestBuilder {
     /**
      * Set the HTTP method to use
      * @param method the http method
-     * @return
+     * @return this request builder
      */
     public HTTPProxyRequestBuilder setHTTPMethod(RequestMethod method) {
         this.requestMethod = method;
@@ -68,7 +68,7 @@ public class HTTPProxyRequestBuilder {
     /**
      * Set the custom content type. This value has no effect if the {@link HTTPProxyRequestBuilder#contentType} is anything other than {@link ContentType#CUSTOM}.
      * @param customContentType the string value of the content type properly
-     * @return
+     * @return this request builder
      */
     public HTTPProxyRequestBuilder setCustomContentType(String customContentType) {
         this.customContentType = customContentType;
@@ -76,9 +76,19 @@ public class HTTPProxyRequestBuilder {
     }
 
     /**
-     * Set the content type we will be posting to the http server
-     * @param contentBody the content type
-     * @return
+     * Set the content type which we will post to the http server
+     * @param contentType the content type
+     * @return this request builder
+     */
+    public HTTPProxyRequestBuilder setContentType(ContentType contentType) {
+        this.contentType = contentType;
+        return this;
+    }
+
+    /**
+     * Set the value of the string content body using a UTF8 string encoding
+     * @param contentBody the content body as a string
+     * @return this request builder
      */
     public HTTPProxyRequestBuilder setContentBody(String contentBody) {
         return setContentBody(contentBody, StandardCharsets.UTF_8);
@@ -86,9 +96,9 @@ public class HTTPProxyRequestBuilder {
 
     /**
      * Set the value of the string content body
-     * @param contentBody the string content body
+     * @param contentBody the content body as a string
      * @param charset the charset which the string is encoded in
-     * @return
+     * @return this request builder
      */
     public HTTPProxyRequestBuilder setContentBody(String contentBody, Charset charset) {
         this.contentBody = contentBody.getBytes(charset);
@@ -98,7 +108,7 @@ public class HTTPProxyRequestBuilder {
     /**
      * Set the binary content body for this request
      * @param bytes the binary content
-     * @return
+     * @return this request builder
      */
     public HTTPProxyRequestBuilder setContentBody(byte[] bytes) {
         this.contentBody = bytes;
@@ -108,7 +118,7 @@ public class HTTPProxyRequestBuilder {
     /**
      * How long to wait before the connection times out
      * @param millis the time in milliseconds
-     * @return
+     * @return this request builder
      */
     public HTTPProxyRequestBuilder setConnectionTimeoutMillis(int millis) {
         this.connectionTimeOutMillis = millis;
@@ -118,7 +128,7 @@ public class HTTPProxyRequestBuilder {
     /**
      * Whether this http request should follow any redirects by the server
      * @param follow true if to follow and false otherwise
-     * @return
+     * @return this request builder
      */
     public HTTPProxyRequestBuilder setFollowRedirects(boolean follow) {
         this.followRedirects = follow;
@@ -128,7 +138,7 @@ public class HTTPProxyRequestBuilder {
     /**
      * Whether this http reqest should use caches
      * @param useCaches true if to use caches and false otherwise
-     * @return
+     * @return this request builder
      */
     public HTTPProxyRequestBuilder setUseCaches(boolean useCaches) {
         this.useCaches = useCaches;

@@ -26,12 +26,12 @@
   <p align="center">
     A pure-java library built for managing large number of proxies!
     <br />
-    <a href="https://github.com/github_username/repo_name"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/Aseeef/AseefianProxyPool/wiki"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/github_username/repo_name/issues">Report Bug</a>
+    <a href="https://github.com/Aseeef/AseefianProxyPool/issues">Report Bug</a>
     ·
-    <a href="https://github.com/github_username/repo_name/issues">Request Feature</a>
+    <a href="https://github.com/Aseeef/AseefianProxyPool/issues">Request Feature</a>
   </p>
 </div>
 
@@ -55,7 +55,6 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
@@ -92,10 +91,37 @@ APP requires at least Java 8 or higher.
 
 ### Installation
 
-APP maybe installed either via Maven or downloaded directly and then added as a dependency.
+APP maybe installed either via the maven repository jitpack or downloaded directly and then added as a dependency.
 
+#### Gradle
+```
+repositories {
+	...
+	maven { url 'https://jitpack.io' }
+}
+```
+```
+dependencies {
+    implementation ('com.github.Aseeef:AseefianProxyPool:latest.release')
+}
+```
 #### Maven
-
+```
+<repositories>
+    ...
+	<repository>
+		 <id>jitpack.io</id>
+		 <url>https://jitpack.io</url>
+	</repository>
+</repositories>
+```
+```
+<dependency>
+	<groupId>com.github.Aseeef</groupId>
+	<artifactId>AseefianProxyPool</artifactId>
+	<version>LATEST</version>
+</dependency>
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -104,28 +130,51 @@ APP maybe installed either via Maven or downloaded directly and then added as a 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+```
+    // configure the proxy pool's config
+    PoolConfig config = new PoolConfig()
+            .setProxyTimeoutMillis(3000)
+            .setProxyTestFrequency(15000)
+            .setConnectionLeakThreshold(30000)
+            .setTestProxies(true)
+            .setMaxConcurrency(Integer.MAX_VALUE)
+            .setLeakTestFrequencyMillis(10)
+            .setSortingMode(PoolConfig.SortingMode.LAST_USED);
+    // create a list of all proxies that this pool will have
+    List<AseefianProxy> proxies = new ArrayList<>();
+    proxies.add(new AseefianProxy("host1", 1234, Proxy.Type.HTTP));
+    proxies.add(new AseefianProxy("hos2t", 1234, Proxy.Type.HTTP, "username", "password"));
+    // create the proxy pool
+    pool = new AseefianProxyPool(proxies, config);
+    pool.init();
+
+    // now that the pool is created, grab a proxy connection from the pool
+    // and execute an http request
+    try (ProxyConnection connection = pool.getConnection()) {
+        // you don't have to use APP's built in HTTPProxyRequestBuilder.
+        // but in this example, I am...
+        HTTPProxyRequestBuilder requestBuilder = connection
+                .getRequestBuilder("https://some.site/api/v1/request")
+                .setHTTPMethod(HTTPProxyRequestBuilder.RequestMethod.POST) // we are making a post reqest
+                .setConnectionTimeoutMillis(1000)
+                .setContentType(HTTPProxyRequestBuilder.ContentType.APPLICATION_JSON)
+                .setContentBody("{\"example\":\"more example\"}");
+        HTTPProxyRequest request = requestBuilder.build(); // build the request
+        // first attempt to connect to the http server
+        request.connect();
+        // if there is an issue and the response code is not 200, then do something
+        if (request.getResponseCode() != 200) {
+            //do something
+        }
+        // get the response string
+        String response = request.getContentString();
+        System.out.println(response);
+    }
+```
 
 _For more examples, please refer to the [Documentation](https://example.com)_
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-<!-- CONTRIBUTING -->
-## Contributing
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 <!-- LICENSE -->
