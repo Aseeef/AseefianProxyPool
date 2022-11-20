@@ -58,3 +58,15 @@ tasks.withType(JavaCompile) {
 tasks.withType(Test) {
     jvmArgs '-Dfile.encoding=UTF-8'
 }
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'com.github.Aseeef'
+            artifactId = 'AseefianProxyPool'
+            version = project.version
+
+            from components.java
+        }
+    }
+}

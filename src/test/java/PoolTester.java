@@ -4,7 +4,6 @@ import com.github.Aseeef.http.HTTPProxyRequest;
 import com.github.Aseeef.wrappers.PoolConfig;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.Proxy;
 
 public class PoolTester {
@@ -57,17 +56,6 @@ public class PoolTester {
 
          */
 
-
-//        try (ProxyConnection proxy = new ApacheProxyPool(null).getConnection()) {
-//            System.out.println(Authenticator.getDefault().requestPasswordAuthenticationInstance(null, null, 0, null, null, null, null, null));
-//            HttpURLConnection url = (HttpURLConnection) new URL("https://api.myip.com").openConnection(proxy);
-//            InputStream is = url.getInputStream();
-//            byte[] targetArray = new byte[url.getContentLength()];
-//            is.read(targetArray);
-//            System.out.println(new String(targetArray));
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
 
     }
 
