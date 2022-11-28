@@ -70,7 +70,7 @@ The Aseefian Proxy Pool (APP) is a thread safe framework for managing a large nu
 ### Features
 
 * Built to be thread safe
-* Lightweight (with a shaded jar of 36kb)
+* Lightweight (with a shaded jar of ~36kb)
 * Comes with a simple and built in framework for making HTTP requests
 * Built in with optional support for the Apache HTTP Client Framework
 * Supports using both HTTP and SOCKS5 proxies
@@ -213,4 +213,4 @@ Project Link: [https://github.com/Aseeef/AseefianProxyPool](https://github.com/A
 [jitpack-shield]: https://img.shields.io/jitpack/version/com.github.Aseeef/AseefianProxyPool?style=for-the-badge
 [jitpack-url]: https://jitpack.io/#Aseeef/AseefianProxyPool/
 [download-shield]: https://img.shields.io/github/downloads/Aseeef/AseefianProxyPool/total?style=for-the-badge
-[download-url]: https://jitpack.io/#Aseeef/AseefianProxyPool/
+[download-url]: https://github.com/Aseeef/AseefianProxyPool/releases
